@@ -154,7 +154,7 @@ function drawCandleChart(id,rows){
  const hasOHLC=data.some(x=>x.open!==null&&x.high!==null&&x.low!==null);
  if(!hasOHLC){ctx.fillStyle='#929dad';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText('원본 지수 응답에 시가·고가·저가가 없어 캔들을 표시할 수 없습니다',w/2,h/2);return}
  const priceRows=data.filter(x=>x.open!==null&&x.high!==null&&x.low!==null);
- const p={l:8,r:48,t:10,b:28},volH=48,gap=9,priceH=h-p.t-p.b-volH-gap,volTop=p.t+priceH+gap,cw=w-p.l-p.r;
+ const p={l:8,r:48,t:10,b:15},volH=48,gap=4,priceH=h-p.t-p.b-volH-gap,volTop=p.t+priceH+gap,cw=w-p.l-p.r;
  let lo=Math.min(...priceRows.map(x=>x.low)),hi=Math.max(...priceRows.map(x=>x.high));const pad=(hi-lo)*.06||1;lo-=pad;hi+=pad;
  const maxVol=Math.max(1,...data.map(x=>x.volume||0)),step=cw/data.length,candleW=Math.max(2,Math.min(8,step*.62));
  const y=v=>p.t+(hi-v)/(hi-lo)*priceH;
@@ -163,7 +163,7 @@ function drawCandleChart(id,rows){
  // Month boundaries become vertical guides; month labels are centered under each month segment.
  const monthKey=r=>{const raw=String(r?.date||'');const m=raw.match(/(\d{4})[-./]?(\d{1,2})/);return m?m[1]+'-'+String(m[2]).padStart(2,'0'):''};
  const months=[];data.forEach((r,i)=>{const key=monthKey(r);if(!key)return;let last=months[months.length-1];if(!last||last.key!==key){if(last)last.end=i-1;months.push({key,label:key.slice(-2)+'.',start:i,end:data.length-1})}});
- months.forEach((m,i)=>{const x=p.l+step*m.start;if(i>0){ctx.strokeStyle='#e2e7ee';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x, p.t);ctx.lineTo(x,volTop+volH);ctx.stroke()}const end=i<months.length-1?months[i+1].start-1:data.length-1;const cx=p.l+step*((m.start+end+1)/2);ctx.fillStyle='#929dad';ctx.font='9px sans-serif';ctx.textAlign='center';ctx.fillText(m.label,cx,h-4)});
+ months.forEach((m,i)=>{const x=p.l+step*m.start;if(i>0){ctx.strokeStyle='#e2e7ee';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x, p.t);ctx.lineTo(x,volTop+volH);ctx.stroke()}const labelX=p.l+step*m.start+2;ctx.fillStyle='#929dad';ctx.font='9px sans-serif';ctx.textAlign='left';ctx.fillText(m.label,labelX,h-3)});
  const allMA=[5,10,20,40,60,120].map(n=>({n,values:movingAverage(rows,n).slice(-120)}));
  for(const ma of allMA){ctx.strokeStyle=MA_COLORS[ma.n];ctx.lineWidth=1.25;ctx.beginPath();let started=false;ma.values.slice(-120).forEach((v,i)=>{if(v===null)return;const x=p.l+step*(i+.5),yy=y(v);if(!started){ctx.moveTo(x,yy);started=true}else ctx.lineTo(x,yy)});if(started)ctx.stroke()}
  data.forEach((r,i)=>{if(r.open===null||r.high===null||r.low===null)return;const x=p.l+step*(i+.5),up=r.close>=r.open,col=up?'#e34b55':'#3478d4';ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,y(r.high));ctx.lineTo(x,y(r.low));ctx.stroke();const top=y(Math.max(r.open,r.close)),bottom=y(Math.min(r.open,r.close));ctx.fillRect(x-candleW/2,top,candleW,Math.max(1,bottom-top));if(r.volume!==null){const vh=(r.volume/maxVol)*(volH-5);ctx.globalAlpha=.55;ctx.fillRect(x-candleW/2,volTop+volH-vh,candleW,vh);ctx.globalAlpha=1}});
