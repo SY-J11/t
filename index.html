@@ -1,97 +1,55 @@
-<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f4f6fa">
-<title>수급 동향 | STOCK INSIGHT PRO</title>
-<link rel="stylesheet" href="flow.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
-</head>
-<body>
-<div class="app">
-<header>
-  <a class="brand" href="./" aria-label="종목 인사이트로 돌아가기"><i></i><span><b>종목 인사이트</b><small>STOCK INSIGHT PRO</small></span></a>
-  <div class="head-right"><span class="live-dot"></span><span id="connectionState">데이터 연결 대기</span><button id="themeBtn" aria-label="테마 전환">◐</button></div>
-</header>
-<main>
-  <div class="page-title">
-    <div><span class="eyebrow">MARKET FLOW</span><h1>수급 동향</h1><p>코스피 · 코스닥 · KOSPI200 선물의 투자자별 매매 흐름</p></div>
-    <button id="reloadBtn" class="reload">↻ 새로고침</button>
-  </div>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f3f5f9"><title>수급 동향 | MARKET FLOW</title>
+<style>
+:root{--bg:#f3f5f9;--card:#fff;--line:#e5eaf1;--text:#202938;--muted:#8994a5;--navy:#263e60;--red:#e34b55;--blue:#3478d4;--green:#159b76}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.wrap{max-width:1180px;margin:auto;padding:16px 17px 42px}header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.brand{display:flex;gap:10px;align-items:center}.logo{background:var(--navy);color:white;border-radius:12px;width:40px;height:40px;display:grid;place-items:center;font-size:22px}.brand b{font-size:18px}.brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:1.4px}.btn,.tab,.seg{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:9px;padding:9px 12px;font-weight:750;cursor:pointer}.primary,.tab.active,.seg.active{background:var(--navy);color:white;border-color:var(--navy)}.tabs,.segments{display:flex;gap:7px;overflow:auto;padding:2px 0 12px}.tab{white-space:nowrap}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}.seg{padding:7px 10px;font-size:12px}.stamp,.muted{color:var(--muted);font-size:11px}.panel{display:none}.panel.active{display:block}.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0;box-shadow:0 5px 20px #1c2c440c}.s12{grid-column:span 12}.s8{grid-column:span 8}.s6{grid-column:span 6}.s4{grid-column:span 4}.head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:12px}.head h2{font-size:15px;margin:0}.price{font-size:27px;font-weight:850}.change{font-weight:800;margin-left:9px}.positive{color:var(--red)}.negative{color:var(--blue)}.neutral{color:var(--muted)}.chart{height:225px}.chart canvas{width:100%;height:100%}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.metric{background:#f6f8fb;padding:10px;border-radius:9px}.metric span{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.metric b{font-size:15px}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:550px;font-size:12px}th,td{padding:10px 8px;text-align:right;white-space:nowrap;border-bottom:1px solid #edf0f4}th{background:#f8f9fb;color:#738094}th:first-child,td:first-child{text-align:left}.empty{text-align:center!important;white-space:normal;color:var(--muted);padding:23px!important}.notice{background:#f4f7fa;color:#68778a;padding:11px;border-radius:9px;font-size:12px;line-height:1.6;margin-top:10px}.notice.warn{background:#fff5ee;color:#a86b32}.notice.error{background:#fff0f0;color:#b64b55}.notice.ok{background:#eef8f3;color:#238464}.legend{display:flex;gap:14px;font-size:11px;color:#667386;margin-top:8px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.foot{font-size:11px;color:var(--muted);line-height:1.6;margin:18px 2px}.loading{opacity:.55;pointer-events:none}@media(max-width:760px){.wrap{padding:12px 11px 32px}.s8,.s6,.s4{grid-column:span 12}.card{padding:12px}.chart{height:205px}.price{font-size:24px}.metrics{grid-template-columns:repeat(2,1fr)}}
+</style></head><body><div class="wrap">
+<header><div class="brand"><div class="logo">↗</div><div><b>수급 동향</b><small>MARKET FLOW DASHBOARD</small></div></div><button class="btn primary" id="refresh">↻ 새로고침</button></header>
+<nav class="tabs"><button class="tab active" data-view="kospi">코스피</button><button class="tab" data-view="kosdaq">코스닥</button><button class="tab" data-view="futures">선물</button><button class="tab" data-view="compare">통합 비교</button><button class="tab" data-view="cumulative">누적 수급</button></nav>
+<div class="toolbar"><div class="segments" id="periods"><button class="seg active" data-period="일">일</button><button class="seg" data-period="주">주</button><button class="seg" data-period="월">월</button><button class="seg" data-period="년">년</button></div><div class="segments" id="ranges"><button class="seg active" data-range="10">최근 10일</button><button class="seg" data-range="60">최근 60일</button></div><span class="stamp" id="stamp">데이터 연결 대기</span></div>
 
-  <section class="notice">
-    <b>데이터 안내</b>
-    <span>실제 거래소 데이터만 표시합니다. 아직 연결되지 않은 항목은 임의 수치 대신 ‘자료 없음’으로 표시합니다.</span>
-    <a href="https://data.krx.co.kr/contents/MDC/MAIN/main/index.cmd" target="_blank" rel="noopener">KRX 정보데이터시스템 ↗</a>
-  </section>
+<section class="panel active" id="panel-kospi"><div class="grid">
+<article class="card s8"><div class="head"><h2>코스피 지수</h2><span class="muted">일별 종가</span></div><span class="price" id="kospiPrice">—</span><span class="change neutral" id="kospiChange">데이터 대기</span><div class="chart"><canvas id="kospiChart"></canvas></div></article>
+<article class="card s4"><div class="head"><h2>최근 거래일 수급</h2><span class="muted">억원</span></div><div class="metrics"><div class="metric"><span>개인</span><b id="kospi-individual">—</b></div><div class="metric"><span>외국인</span><b id="kospi-foreign">—</b></div><div class="metric"><span>기관</span><b id="kospi-institution">—</b></div></div><div class="notice" id="kospiStatus">데이터 요청 중</div></article>
+<article class="card s6"><div class="head"><h2>지수 및 등락 현황</h2><span class="muted">상승·보합·하락</span></div><div class="tablewrap"><table><thead><tr><th>날짜</th><th>지수</th><th>등락</th><th>등락률</th><th>상승</th><th>보합</th><th>하락</th></tr></thead><tbody id="kospiIndexRows"></tbody></table></div></article>
+<article class="card s6"><div class="head"><h2>투자자별 순매수</h2><span class="muted">억원</span></div><div class="tablewrap"><table><thead><tr><th>날짜</th><th>개인</th><th>외국인</th><th>기관</th></tr></thead><tbody id="kospiFlowRows"></tbody></table></div></article>
+<article class="card s12"><div class="head"><h2>프로그램 매매</h2><span class="muted">억원</span></div><div class="tablewrap"><table><thead><tr><th>날짜</th><th>차익</th><th>비차익</th><th>전체</th></tr></thead><tbody id="kospiProgramRows"></tbody></table></div></article>
+</div></section>
 
-  <nav class="section-nav" aria-label="수급 동향 섹션">
-    <a href="#kospi">코스피</a><a href="#kosdaq">코스닥</a><a href="#futures">선물</a><a href="#compare">통합 비교</a><a href="#analysis">누적 분석</a>
-  </nav>
+<section class="panel" id="panel-kosdaq"><div class="grid">
+<article class="card s8"><div class="head"><h2>코스닥 지수</h2><span class="muted">일별 종가</span></div><span class="price" id="kosdaqPrice">—</span><span class="change neutral" id="kosdaqChange">데이터 대기</span><div class="chart"><canvas id="kosdaqChart"></canvas></div></article>
+<article class="card s4"><div class="head"><h2>최근 거래일 수급</h2><span class="muted">억원</span></div><div class="metrics"><div class="metric"><span>개인</span><b id="kosdaq-individual">—</b></div><div class="metric"><span>외국인</span><b id="kosdaq-foreign">—</b></div><div class="metric"><span>기관</span><b id="kosdaq-institution">—</b></div></div><div class="notice" id="kosdaqStatus">데이터 요청 중</div></article>
+<article class="card s6"><div class="head"><h2>지수 및 등락 현황</h2></div><div class="tablewrap"><table><thead><tr><th>날짜</th><th>지수</th><th>등락</th><th>등락률</th><th>상승</th><th>보합</th><th>하락</th></tr></thead><tbody id="kosdaqIndexRows"></tbody></table></div></article>
+<article class="card s6"><div class="head"><h2>투자자별 순매수</h2></div><div class="tablewrap"><table><thead><tr><th>날짜</th><th>개인</th><th>외국인</th><th>기관</th></tr></thead><tbody id="kosdaqFlowRows"></tbody></table></div></article>
+<article class="card s12"><div class="head"><h2>프로그램 매매</h2></div><div class="tablewrap"><table><thead><tr><th>날짜</th><th>차익</th><th>비차익</th><th>전체</th></tr></thead><tbody id="kosdaqProgramRows"></tbody></table></div></article>
+</div></section>
 
-  <section class="panel market-panel" id="kospi">
-    <div class="panel-head"><div><span class="eyebrow">KOSPI</span><h2>코스피</h2></div><span class="data-badge">현물 · 억원</span></div>
-    <div class="period-tabs" data-chart-tabs="kospi"><button class="active" data-period="day">일</button><button data-period="week">주</button><button data-period="month">월</button><button data-period="year">년</button></div>
-    <div class="chart-wrap"><canvas id="kospiChart"></canvas><div class="empty-overlay" id="kospiEmpty">실제 지수 데이터 연결 후 표시됩니다.</div></div>
-    <div class="subhead"><b>투자자별 순매수</b><span>최근 <select class="table-range" data-table="kospi"><option>10</option><option>20</option><option>40</option><option>60</option></select>거래일</span></div>
-    <div class="table-scroll"><table><thead><tr><th>일자</th><th>개인</th><th>외국인</th><th>기관</th></tr></thead><tbody id="kospiFlows"><tr><td colspan="4" class="empty-cell">자료 없음</td></tr></tbody></table></div>
-    <details class="detail-box"><summary>지수 및 프로그램 매매 상세</summary>
-      <div class="table-scroll"><table><thead><tr><th>일자</th><th>지수</th><th>등락</th><th>등락률</th><th>상승</th><th>보합</th><th>하락</th></tr></thead><tbody id="kospiIndex"><tr><td colspan="7" class="empty-cell">자료 없음</td></tr></tbody></table></div>
-      <div class="table-scroll"><table><thead><tr><th>일자</th><th>차익</th><th>비차익</th><th>합계</th></tr></thead><tbody id="kospiProgram"><tr><td colspan="4" class="empty-cell">자료 없음</td></tr></tbody></table></div>
-    </details>
-  </section>
+<section class="panel" id="panel-futures"><div class="grid"><article class="card s8"><div class="head"><h2>코스피200 선물</h2><span class="muted">최근월물</span></div><div class="price">—</div><div class="chart"><canvas id="futuresChart"></canvas></div><div class="notice warn">선물 가격·거래량·미결제약정·베이시스는 별도의 KRX 파생상품 데이터가 필요합니다. 검증된 데이터 연결 전에는 숫자를 임의로 표시하지 않습니다.</div></article><article class="card s4"><div class="head"><h2>선물 투자자별 순매수</h2></div><div class="metrics"><div class="metric"><span>개인</span><b>—</b></div><div class="metric"><span>외국인</span><b>—</b></div><div class="metric"><span>기관</span><b>—</b></div></div><div class="notice warn">KRX 파생상품 투자자별 거래 자료 연결 후 표시합니다.</div></article><article class="card s12"><div class="head"><h2>선물 일별 데이터</h2><span class="muted">가격·거래량·거래대금·미결제약정·베이시스</span></div><div class="tablewrap"><table><thead><tr><th>날짜</th><th>지수</th><th>등락</th><th>등락률</th><th>거래량</th><th>거래대금</th><th>미결제약정</th><th>베이시스</th></tr></thead><tbody><tr><td colspan="8" class="empty">검증된 선물 데이터 연결 전</td></tr></tbody></table></div></article></div></section>
 
-  <section class="panel market-panel" id="kosdaq">
-    <div class="panel-head"><div><span class="eyebrow">KOSDAQ</span><h2>코스닥</h2></div><span class="data-badge">현물 · 억원</span></div>
-    <div class="period-tabs" data-chart-tabs="kosdaq"><button class="active" data-period="day">일</button><button data-period="week">주</button><button data-period="month">월</button><button data-period="year">년</button></div>
-    <div class="chart-wrap"><canvas id="kosdaqChart"></canvas><div class="empty-overlay" id="kosdaqEmpty">실제 지수 데이터 연결 후 표시됩니다.</div></div>
-    <div class="subhead"><b>투자자별 순매수</b><span>최근 <select class="table-range" data-table="kosdaq"><option>10</option><option>20</option><option>40</option><option>60</option></select>거래일</span></div>
-    <div class="table-scroll"><table><thead><tr><th>일자</th><th>개인</th><th>외국인</th><th>기관</th></tr></thead><tbody id="kosdaqFlows"><tr><td colspan="4" class="empty-cell">자료 없음</td></tr></tbody></table></div>
-    <details class="detail-box"><summary>지수 및 프로그램 매매 상세</summary>
-      <div class="table-scroll"><table><thead><tr><th>일자</th><th>지수</th><th>등락</th><th>등락률</th><th>상승</th><th>보합</th><th>하락</th></tr></thead><tbody id="kosdaqIndex"><tr><td colspan="7" class="empty-cell">자료 없음</td></tr></tbody></table></div>
-      <div class="table-scroll"><table><thead><tr><th>일자</th><th>차익</th><th>비차익</th><th>합계</th></tr></thead><tbody id="kosdaqProgram"><tr><td colspan="4" class="empty-cell">자료 없음</td></tr></tbody></table></div>
-    </details>
-  </section>
+<section class="panel" id="panel-compare"><div class="grid"><article class="card s12"><div class="head"><h2>시장별 투자자 수급 비교</h2><span class="muted">억원</span></div><div class="tablewrap"><table><thead><tr><th>날짜</th><th>시장</th><th>개인</th><th>외국인</th><th>기관</th></tr></thead><tbody id="compareRows"></tbody></table></div><div class="notice">코스피·코스닥 현물 수급을 같은 날짜로 비교합니다. 선물은 거래 단위와 해석이 달라 별도 표기합니다.</div></article></div></section>
 
-  <section class="panel market-panel" id="futures">
-    <div class="panel-head"><div><span class="eyebrow">KOSPI 200 FUTURES</span><h2>선물</h2></div><span class="data-badge">금액 + 계약</span></div>
-    <div class="period-tabs" data-chart-tabs="futures"><button class="active" data-period="day">일</button><button data-period="week">주</button><button data-period="month">월</button><button data-period="year">년</button></div>
-    <div class="chart-wrap"><canvas id="futuresChart"></canvas><div class="empty-overlay" id="futuresEmpty">실제 선물 지수 데이터 연결 후 표시됩니다.</div></div>
-    <div class="subhead"><b>투자자별 순매수</b><span>최근 <select class="table-range" data-table="futures"><option>10</option><option>20</option><option>40</option><option>60</option></select>거래일</span></div>
-    <div class="table-scroll"><table><thead><tr><th>일자</th><th>개인</th><th>외국인</th><th>기관</th></tr></thead><tbody id="futuresFlows"><tr><td colspan="4" class="empty-cell">자료 없음</td></tr></tbody></table></div>
-    <div class="table-scroll"><table><thead><tr><th>일자</th><th>선물지수</th><th>등락</th><th>등락률</th><th>거래량</th><th>거래대금</th><th>미결제약정</th><th>베이시스</th></tr></thead><tbody id="futuresInfo"><tr><td colspan="8" class="empty-cell">자료 없음</td></tr></tbody></table></div>
-    <p class="unit-note">선물 순매수 표기: 금액은 억원, 괄호 안은 계약 수입니다. 예: 1,250억 (+1,250계약)</p>
-  </section>
-
-  <section class="panel" id="compare">
-    <div class="panel-head"><div><span class="eyebrow">FLOW COMPARISON</span><h2>투자자별 수급 통합 비교</h2></div></div>
-    <div class="range-tabs" data-range="compare"><button class="active" data-days="10">10일</button><button data-days="20">20일</button><button data-days="40">40일</button><button data-days="60">60일</button></div>
-    <div id="compareBlocks" class="compare-grid"><div class="empty-cell wide">실제 투자자별 데이터 연결 후 표시됩니다.</div></div>
-    <p class="unit-note">코스피·코스닥은 억원, 선물은 억원과 계약을 함께 표시합니다.</p>
-  </section>
-
-  <section class="panel" id="analysis">
-    <div class="panel-head"><div><span class="eyebrow">CUMULATIVE FLOW</span><h2>누적 순매수 분석</h2></div></div>
-    <div class="range-tabs" data-range="cumulative"><button data-days="5">5일</button><button class="active" data-days="10">10일</button><button data-days="20">20일</button><button data-days="40">40일</button><button data-days="60">60일</button><button data-days="100">100일</button><button data-days="200">200일</button></div>
-    <div class="asset-tabs" data-asset="cumulative"><button class="active" data-asset-name="kospi">코스피</button><button data-asset-name="kosdaq">코스닥</button><button data-asset-name="futures">선물</button></div>
-    <div class="chart-wrap cumulative-wrap"><canvas id="cumulativeChart"></canvas><div class="empty-overlay" id="cumulativeEmpty">누적 수급 데이터 연결 후 표시됩니다.</div></div>
-    <div class="streak-grid">
-      <div><small>개인 연속 순매수</small><b id="streak-individual">자료 없음</b></div>
-      <div><small>외국인 연속 순매수</small><b id="streak-foreign">자료 없음</b></div>
-      <div><small>기관 연속 순매수</small><b id="streak-institution">자료 없음</b></div>
-    </div>
-    <p class="unit-note">누적 그래프는 선택 기간 첫 거래일을 0으로 두고 이후 일별 순매수를 누적합니다. 일별 순매수와 누적 순매수는 서로 다른 지표입니다.</p>
-  </section>
-
-  <section class="panel data-setup">
-    <div class="panel-head"><div><span class="eyebrow">DATA STATUS</span><h2>데이터 연결 상태</h2></div><span class="data-badge warn">실데이터 미연결</span></div>
-    <p>이 페이지의 화면과 표 구조는 준비되어 있습니다. 다만 기존 STOCK INSIGHT PRO에서 사용 중인 네이버 종목정보 프록시는 KRX 투자자별 거래실적·프로그램 매매·선물 수급 API가 아닙니다. 정확한 실데이터를 연결하려면 별도 데이터 공급 경로가 필요합니다.</p>
-    <ul><li>KRX 정보데이터시스템: 투자자별 거래실적, 프로그램 매매, 지수·선물 통계 확인</li><li>자동 수집: KRX 데이터 요청 규격에 맞춘 서버 프록시 또는 증권사 데이터 API 필요</li><li>선물 금액과 계약 수는 각각 원천 데이터의 단위를 확인한 뒤 표시</li></ul>
-    <a class="source-link" href="https://data.krx.co.kr/contents/MDC/MAIN/main/index.cmd" target="_blank" rel="noopener">한국거래소 정보데이터시스템 열기 ↗</a>
-  </section>
-  <footer>STOCK INSIGHT PRO · 수급 동향 · 출처 및 단위 확인 필수</footer>
-</main>
-</div>
-<script src="flow.js"></script>
-</body></html>
+<section class="panel" id="panel-cumulative"><div class="grid"><article class="card s12"><div class="head"><h2>투자자 누적 순매수</h2><span class="muted">첫날 = 0</span></div><div class="segments" id="cumRanges"><button class="seg" data-cum="5">5일</button><button class="seg active" data-cum="10">10일</button><button class="seg" data-cum="20">20일</button><button class="seg" data-cum="40">40일</button><button class="seg" data-cum="60">60일</button><button class="seg" data-cum="100">100일</button><button class="seg" data-cum="200">200일</button></div><div class="chart"><canvas id="cumChart"></canvas></div><div class="legend"><span><i class="dot" style="background:#e34b55"></i>개인</span><span><i class="dot" style="background:#3478d4"></i>외국인</span><span><i class="dot" style="background:#159b76"></i>기관</span></div><div class="notice" id="cumStatus">일별 수급 데이터가 연결되면 누적선을 계산합니다.</div></article><article class="card s12"><div class="head"><h2>순매수·순매도 연속 일수</h2></div><div class="metrics"><div class="metric"><span>개인</span><b id="streak-individual">—</b></div><div class="metric"><span>외국인</span><b id="streak-foreign">—</b></div><div class="metric"><span>기관</span><b id="streak-institution">—</b></div></div></article></div></section>
+<footer class="foot">출처: 네이버페이 증권 공개 지수·시장 매매동향 경로. 비공식 공개 API는 응답 구조와 접근 정책이 변경될 수 있습니다. 원본 단위가 확인되지 않은 투자자 수급 값은 숫자로 표시하지 않습니다. 선물 데이터는 검증된 KRX 파생상품 자료 연결 전까지 공란입니다.</footer></div>
+<script>
+'use strict';
+const WORKER='https://supply.mcraft-tiger-574.workers.dev', $=id=>document.getElementById(id);
+const S={view:'kospi',range:10,cum:10,data:{KOSPI:null,KOSDAQ:null}};
+const fmt=(v,d=2)=>Number.isFinite(Number(v))?Number(v).toLocaleString('ko-KR',{maximumFractionDigits:d}):'—';
+function cls(v){return Number(v)>0?'positive':Number(v)<0?'negative':'neutral'}
+function deepArrays(o,out=[],d=0){if(!o||d>6)return out;if(Array.isArray(o)){if(o.length&&typeof o[0]==='object')out.push(o);o.slice(0,20).forEach(x=>deepArrays(x,out,d+1))}else if(typeof o==='object')Object.values(o).forEach(x=>deepArrays(x,out,d+1));return out}
+function pickArray(o,keys){for(const k of keys){if(Array.isArray(o?.[k]))return o[k];if(o?.[k]&&typeof o[k]==='object')for(const v of Object.values(o[k]))if(Array.isArray(v))return v}return null}
+function normalizeIndex(payload){let a=pickArray(payload,['priceList','prices','result','data','items','indexPriceList','list']);if(!a)a=deepArrays(payload).find(x=>x.some(r=>Object.keys(r).some(k=>/closePrice|indexValue|closeVal|localTradedAt|bizdate/i.test(k))));if(!a)return[];return a.map(r=>({date:String(r.localTradedAt||r.date||r.bizdate||r.tradingDate||r.dt||r.dateString||'').slice(0,10),value:Number(String(r.closePrice??r.indexValue??r.closeVal??r.currentPrice??r.close??'').replace(/,/g,''))})).filter(x=>x.date&&Number.isFinite(x.value)).sort((a,b)=>a.date.localeCompare(b.date))}
+function draw(id,series){const c=$(id);if(!c)return;const w=Math.max(280,c.clientWidth),h=Math.max(160,c.clientHeight),d=devicePixelRatio||1;c.width=w*d;c.height=h*d;const x=c.getContext('2d');x.scale(d,d);x.clearRect(0,0,w,h);const vals=series.flatMap(s=>s.values||[]).filter(Number.isFinite);if(!vals.length){x.fillStyle='#8994a5';x.font='12px sans-serif';x.textAlign='center';x.fillText('시계열 데이터 연결 대기',w/2,h/2);return}let lo=Math.min(0,...vals),hi=Math.max(0,...vals);if(lo===hi){lo-=1;hi+=1}const p={l:48,r:10,t:12,b:20},cw=w-p.l-p.r,ch=h-p.t-p.b;x.font='10px sans-serif';for(let i=0;i<5;i++){const y=p.t+ch*i/4;x.strokeStyle='#e9edf3';x.beginPath();x.moveTo(p.l,y);x.lineTo(w-p.r,y);x.stroke();x.fillStyle='#8994a5';x.textAlign='right';x.fillText(fmt(hi-(hi-lo)*i/4,0),p.l-5,y+3)}series.forEach(s=>{if(!s.values?.length)return;x.strokeStyle=s.color;x.lineWidth=2;x.beginPath();s.values.forEach((v,i)=>{const xx=p.l+cw*(s.values.length<2?0:i/(s.values.length-1)),yy=p.t+ch*(hi-v)/(hi-lo);i?x.lineTo(xx,yy):x.moveTo(xx,yy)});x.stroke()})}
+function table(id,span,rows){const e=$(id);if(!e)return;if(!rows?.length){e.innerHTML=`<tr><td colspan="${span}" class="empty">원본에서 확인된 데이터가 없습니다.</td></tr>`;return}e.innerHTML=rows.map(r=>'<tr>'+r.map((v,i)=>`<td class="${i>1&&typeof v==='number'?cls(v):''}">${v}</td>`).join('')+'</tr>').join('')}
+function render(m){const k=m.toLowerCase(),d=S.data[m];if(!d)return;const a=normalizeIndex(d.index?.data??d.index),last=a.at(-1),prev=a.at(-2);if(last){$(k+'Price').textContent=fmt(last.value);const delta=prev?last.value-prev.value:null;$(k+'Change').textContent=prev?`${delta>0?'+':''}${fmt(delta)} (${(delta/prev.value*100).toFixed(2)}%)`:'최근 종가';$(k+'Change').className='change '+cls(delta);draw(k+'Chart',[{values:a.slice(-S.range).map(x=>x.value),color:'#3478d4'}]);table(k+'IndexRows',7,a.slice(-S.range).reverse().map((r,i)=>[r.date,fmt(r.value),i===0&&prev?fmt(last.value-prev.value):'—',i===0&&prev?((last.value-prev.value)/prev.value*100).toFixed(2)+'%':'—','—','—','—']))}else table(k+'IndexRows',7,[]);
+const inv=d.investorDay?.text||'';const prog=d.programDay?.text||'';const invRows=parseLegacyTable(inv),progRows=parseLegacyTable(prog);table(k+'FlowRows',4,invRows);table(k+'ProgramRows',4,progRows);$(k+'Status').className='notice '+(last?'ok':'warn');$(k+'Status').textContent=last?`지수 ${a.length}개 관측값 수신. 투자자·프로그램 데이터는 원본 HTML의 표 구조를 읽을 수 있을 때 표시합니다.`:'지수 응답의 날짜·종가 필드를 확인하지 못했습니다.';if(invRows.length){const r=invRows[0];['individual','foreign','institution'].forEach((f,i)=>$(k+'-'+f).textContent=r[i+1]??'—')}}
+function parseLegacyTable(html){if(!html)return[];const doc=new DOMParser().parseFromString(html,'text/html');return [...doc.querySelectorAll('table tr')].map(tr=>[...tr.querySelectorAll('th,td')].map(td=>td.textContent.replace(/\s+/g,' ').trim())).filter(r=>r.length>=4&&/\d{4}[./-]\d{2}[./-]\d{2}/.test(r[0])).map(r=>r.slice(0,4))}
+function compare(){const rows=[];for(const m of ['KOSPI','KOSDAQ']){const d=S.data[m];if(d)parseLegacyTable(d.investorDay?.text||'').slice(0,S.range).forEach(r=>rows.push([r[0],m,...r.slice(1,4)]))}rows.sort((a,b)=>b[0].localeCompare(a[0]));table('compareRows',5,rows)}
+function cumulative(){const m=S.view==='kosdaq'?'KOSDAQ':'KOSPI',d=S.data[m],rows=parseLegacyTable(d?.investorDay?.text||'').slice(0,S.cum).reverse();if(!rows.length){draw('cumChart',[]);$('cumStatus').textContent='일별 투자자 수급 원본 데이터가 확인되지 않아 누적선을 계산할 수 없습니다.';return}const colors=['#e34b55','#3478d4','#159b76'],lines=[1,2,3].map((col,i)=>{let sum=0;return{color:colors[i],values:rows.map((r,j)=>{const v=Number(String(r[col]).replace(/[,+]/g,''));if(j&&Number.isFinite(v))sum+=v;return sum})}});draw('cumChart',lines);$('cumStatus').textContent=`${rows.length}개 거래일 원본 표에서 누적값을 계산했습니다. 단위는 원본 표의 단위를 따릅니다.`}
+function parsePeriodNotAvailable(){ $('stamp').textContent='현재 공개 지수 가격 API는 일별 데이터 기준 · 주/월/년 집계는 추후 지원';}
+async function getMarket(m){const r=await fetch(`${WORKER}?action=market&market=${m}&days=200`,{cache:'no-store'});if(!r.ok)throw Error(`Worker HTTP ${r.status}`);return r.json()}
+async function refresh(){document.body.classList.add('loading');$('stamp').textContent='데이터 요청 중…';try{const [a,b]=await Promise.all([getMarket('KOSPI'),getMarket('KOSDAQ')]);S.data.KOSPI=a;S.data.KOSDAQ=b;render('KOSPI');render('KOSDAQ');compare();if(S.view==='cumulative')cumulative();$('stamp').textContent='확인 '+new Date().toLocaleString('ko-KR')}catch(e){['kospiStatus','kosdaqStatus'].forEach(id=>{$(id).className='notice error';$(id).textContent='연결 오류: '+e.message+' · Worker 주소와 배포 상태를 확인하세요.'});$('stamp').textContent='연결 실패'}finally{document.body.classList.remove('loading')}}
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{S.view=b.dataset.view;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id==='panel-'+S.view));$('periods').style.display=['kospi','kosdaq'].includes(S.view)?'flex':'none';$('ranges').style.display=['kospi','kosdaq'].includes(S.view)?'flex':'none';if(S.view==='compare')compare();if(S.view==='cumulative')cumulative()});
+document.querySelectorAll('[data-range]').forEach(b=>b.onclick=()=>{S.range=+b.dataset.range;document.querySelectorAll('[data-range]').forEach(x=>x.classList.toggle('active',x===b));render('KOSPI');render('KOSDAQ')});
+document.querySelectorAll('[data-period]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-period]').forEach(x=>x.classList.toggle('active',x===b));parsePeriodNotAvailable()});
+document.querySelectorAll('[data-cum]').forEach(b=>b.onclick=()=>{S.cum=+b.dataset.cum;document.querySelectorAll('[data-cum]').forEach(x=>x.classList.toggle('active',x===b));cumulative()});
+$('refresh').onclick=refresh;window.addEventListener('resize',()=>{render('KOSPI');render('KOSDAQ');if(S.view==='cumulative')cumulative()});refresh();
+</script></body></html>
