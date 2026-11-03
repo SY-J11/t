@@ -101,13 +101,35 @@ function dateOf(o){if(!o||typeof o!=='object')return '';for(const k of ['localTr
 function getField(o,arr){if(!o||typeof o!=='object')return null;for(const k of arr){if(o[k]!==undefined&&o[k]!==null){const n=num(o[k]);if(n!==null)return n}}return null}
 function normalizeFlow(payload){const candidates=findRows(payload).sort((a,b)=>b.length-a.length);for(const arr of candidates){const rows=[];for(const o of arr){if(!o||typeof o!=='object')continue;const date=dateOf(o);if(!date)continue;const row={date,individual:getField(o,keys.individual),foreign:getField(o,keys.foreign),institution:getField(o,keys.institution),raw:o};if(row.individual!==null||row.foreign!==null||row.institution!==null)rows.push(row)}if(rows.length)return rows.sort((a,b)=>b.date.localeCompare(a.date))}return []}
 function normalizeIndex(payload){
- let a=Array.isArray(payload)?payload:null;
- if(!a){for(const x of findRows(payload)){if(x.some(o=>o&&typeof o==='object'&&('closePrice'in o)&&('localTradedAt'in o))){a=x;break}}}
- return(a||[]).map(o=>{
-  const date=String(o.localTradedAt||o.localDate||o.date||'').slice(0,10);
-  const close=num(o.closePrice??o.close??o.currentPrice);
-  return {date,open:num(o.openPrice??o.open??o.openingPrice),high:num(o.highPrice??o.high??o.highestPrice),low:num(o.lowPrice??o.low??o.lowestPrice),close,change:num(o.compareToPreviousClosePrice),rate:num(o.fluctuationsRatio),volume:num(o.accumulatedTradingVolume??o.tradingVolume??o.volume??o.accumulatedVolume)};
- }).filter(x=>x.date&&x.close!==null).sort((a,b)=>a.date.localeCompare(b.date));
+ const candidates=[];
+ if(Array.isArray(payload))candidates.push(payload);
+ if(payload&&typeof payload==='object'){
+  for(const key of ['priceInfos','prices','items','data','result','indexPriceList']){
+   const v=payload[key];
+   if(Array.isArray(v))candidates.push(v);
+   else if(v&&typeof v==='object')candidates.push(Object.values(v).filter(x=>x&&typeof x==='object'));
+  }
+  const walk=(v,depth=0)=>{if(!v||typeof v!=='object'||depth>8)return;if(!Array.isArray(v)&&(v.closePrice!==undefined||v.currentPrice!==undefined||v.close!==undefined))candidates.push([v]);if(Array.isArray(v))v.forEach(x=>walk(x,depth+1));else Object.values(v).forEach(x=>walk(x,depth+1));};
+  walk(payload);
+  findRows(payload).forEach(a=>candidates.push(a));
+ }
+ const dateKeys=['localDate','localTradedAt','tradeDate','tradingDate','bizDate','bizdate','date','trdDd','x'];
+ const val=(o,ks)=>{for(const k of ks)if(o?.[k]!==undefined&&o[k]!==null){const n=num(o[k]);if(n!==null)return n}return null};
+ for(const arr of candidates){
+  const rows=arr.map(o=>{
+   if(!o||typeof o!=='object')return null;
+   let date='';for(const k of dateKeys){if(o[k]){date=String(o[k]).replace(/\./g,'-').slice(0,10);if(/^\d{8}$/.test(date))date=`${date.slice(0,4)}-${date.slice(4,6)}-${date.slice(6,8)}`;break}}
+   const close=val(o,['closePrice','close','currentPrice','indexValue','value','nv']);
+   if(close===null)return null;
+   return {date,open:val(o,['openPrice','open','openingPrice','openValue']),high:val(o,['highPrice','high','highestPrice','highValue']),low:val(o,['lowPrice','low','lowestPrice','lowValue']),close,change:val(o,['compareToPreviousClosePrice','fluctuations','change','changePrice','cv']),rate:val(o,['fluctuationsRatio','changeRate','rate','cr']),volume:val(o,['accumulatedTradingVolume','tradingVolume','volume','accumulatedVolume','acmlVol','aq'])};
+  }).filter(Boolean);
+  if(rows.length)return rows.sort((a,b)=>a.date.localeCompare(b.date));
+ }
+ return [];
+}
+function normalizeChartPayload(payload){
+ const rows=normalizeIndex(payload);
+ return rows.filter(r=>r.date&&r.close!==null);
 }
 const MA_COLORS={5:'#e34b55',10:'#e6a23c',20:'#159b76',40:'#3478d4',60:'#8b65c5',120:'#687487'};
 function periodBars(rows,period){
@@ -138,7 +160,7 @@ function drawCandleChart(id,rows){
  const y=v=>p.t+(hi-v)/(hi-lo)*priceH;
  ctx.font='9px sans-serif';ctx.textAlign='right';ctx.fillStyle='#929dad';
  for(let i=0;i<4;i++){const v=hi-(hi-lo)*i/3,yy=y(v);ctx.strokeStyle='#edf0f4';ctx.beginPath();ctx.moveTo(p.l,yy);ctx.lineTo(w-p.r,yy);ctx.stroke();ctx.fillText(v.toLocaleString('ko-KR',{maximumFractionDigits:1}),p.l-5,yy+3)}
- const allMA=[5,10,20,40,60,120].map(n=>({n,values:movingAverage(rows,n)}));
+ const allMA=[5,10,20,40,60,120].map(n=>({n,values:movingAverage(rows,n).slice(-120)}));
  for(const ma of allMA){ctx.strokeStyle=MA_COLORS[ma.n];ctx.lineWidth=1.25;ctx.beginPath();let started=false;ma.values.slice(-120).forEach((v,i)=>{if(v===null)return;const x=p.l+step*(i+.5),yy=y(v);if(!started){ctx.moveTo(x,yy);started=true}else ctx.lineTo(x,yy)});if(started)ctx.stroke()}
  data.forEach((r,i)=>{if(r.open===null||r.high===null||r.low===null)return;const x=p.l+step*(i+.5),up=r.close>=r.open,col=up?'#e34b55':'#3478d4';ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,y(r.high));ctx.lineTo(x,y(r.low));ctx.stroke();const top=y(Math.max(r.open,r.close)),bottom=y(Math.min(r.open,r.close));ctx.fillRect(x-candleW/2,top,candleW,Math.max(1,bottom-top));if(r.volume!==null){const vh=(r.volume/maxVol)*(volH-5);ctx.globalAlpha=.55;ctx.fillRect(x-candleW/2,volTop+volH-vh,candleW,vh);ctx.globalAlpha=1}});
  ctx.strokeStyle='#e6eaf1';ctx.beginPath();ctx.moveTo(p.l,volTop);ctx.lineTo(w-p.r,volTop);ctx.stroke();ctx.fillStyle='#929dad';ctx.textAlign='left';ctx.fillText('거래량',p.l,volTop+10);
@@ -147,7 +169,8 @@ function drawCandleChart(id,rows){
 function setTable(id,rows,cols){const el=$(id);if(!el)return;if(!rows.length){el.innerHTML=`<tr><td colspan="${cols}" class="empty">원본 응답에서 표시 가능한 행을 확인하지 못했습니다.</td></tr>`;return}el.innerHTML=rows.map(r=>'<tr>'+r.map((v,i)=>`<td class="${typeof v==='number'?(v>0?'red':v<0?'blue':'muted'):''}">${v===null?'—':v}</td>`).join('')+'</tr>').join('')}
 function draw(id,series,zero=false){const c=$(id);if(!c)return;const w=Math.max(c.clientWidth,280),h=Math.max(c.clientHeight,150),d=devicePixelRatio||1;c.width=w*d;c.height=h*d;const ctx=c.getContext('2d');ctx.scale(d,d);ctx.clearRect(0,0,w,h);const vals=series.flatMap(s=>s.values||[]).filter(Number.isFinite);if(!vals.length){ctx.fillStyle='#929dad';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText('표시할 시계열 데이터가 없습니다',w/2,h/2);return}let lo=Math.min(...vals),hi=Math.max(...vals);if(zero){lo=Math.min(lo,0);hi=Math.max(hi,0)}if(lo===hi){lo-=1;hi+=1}const p={l:43,r:8,t:10,b:19},cw=w-p.l-p.r,ch=h-p.t-p.b;ctx.font='9px sans-serif';for(let i=0;i<4;i++){const y=p.t+ch*i/3;ctx.strokeStyle='#edf0f4';ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();ctx.fillStyle='#929dad';ctx.textAlign='right';ctx.fillText(fmt(hi-(hi-lo)*i/3,0),p.l-5,y+3)}if(zero&&lo<0&&hi>0){const y=p.t+ch*hi/(hi-lo);ctx.strokeStyle='#bbc4d0';ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();ctx.setLineDash([])}for(const s of series){if(!s.values?.length)continue;ctx.strokeStyle=s.color;ctx.lineWidth=2;ctx.lineJoin='round';ctx.beginPath();s.values.forEach((v,i)=>{const x=p.l+cw*(s.values.length===1?0:i/(s.values.length-1)),y=p.t+ch*(hi-v)/(hi-lo);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()}}
 function marketRows(m){const raw=S.markets[m]||{};return raw.flowRows||normalizeFlow(raw.aggregate)}
-function renderMarket(m){const k=m.toLowerCase(),d=S.markets[m]||{},prices=normalizeIndex(d.index?.data||d.index),last=prices.at(-1),prev=prices.at(-2);if(last){$(k+'-value').textContent=fmt(last.close,2);const delta=last.change??(prev?last.close-prev.close:null),rate=last.rate??(prev?delta/prev.close*100:null);$(k+'-change').textContent=delta===null?'—':`${delta>0?'+':''}${fmt(delta,2)} (${rate===null?'—':rate.toFixed(2)+'%'})`;$(k+'-change').className='index-change '+(delta>0?'red':delta<0?'blue':'muted');const bars=periodBars(prices,S.period).slice(-120);if(m==='KOSPI'){drawCandleChart(k+'-chart',bars);$(k+'-index-note').textContent=`${bars.length}개 ${({day:'일봉',week:'주봉',month:'월봉',year:'연봉'})[S.period]} · 이동평균 5·10·20·40·60·120 · 거래량은 원본 제공 시 표시`;}else{draw(k+'-chart',[{color:'#3478d4',values:bars.map(x=>x.close)}]);$(k+'-index-note').textContent=`${bars.length}개 ${({day:'일별',week:'주별',month:'월별',year:'연별'})[S.period]} 지수 데이터`;}}else{$(k+'-index-note').textContent='지수 시세 응답을 확인하지 못했습니다.';draw(k+'-chart',[])}
+function renderMarket(m){const k=m.toLowerCase(),d=S.markets[m]||{},quote=normalizeIndex(d.index?.data||d.index),last=quote.at(-1);if(last){$(k+'-value').textContent=fmt(last.close,2);const delta=last.change,rate=last.rate;$(k+'-change').textContent=delta===null?'—':`${delta>0?'+':''}${fmt(delta,2)} (${rate===null?'—':rate.toFixed(2)+'%'})`;$(k+'-change').className='index-change '+(delta>0?'red':delta<0?'blue':'muted');}else{$(k+'-value').textContent='—';$(k+'-change').textContent='—';}
+const chartResponse=d.charts?.[S.period];const bars=normalizeChartPayload(chartResponse?.data||chartResponse).slice(-120);if(m==='KOSPI'){drawCandleChart(k+'-chart',bars);const err=chartResponse?.error;$(k+'-index-note').textContent=bars.length?`${bars.length}개 ${({day:'일봉',week:'주봉',month:'월봉',year:'연봉'})[S.period]} · 이동평균 5·10·20·40·60·120 · 거래량`:(err?`네이버 차트 API 오류: ${err}`:'차트 응답은 받았지만 OHLC 데이터를 찾지 못했습니다.');}else{draw(k+'-chart',[{color:'#3478d4',values:bars.map(x=>x.close)}]);$(k+'-index-note').textContent=bars.length?`${bars.length}개 ${({day:'일별',week:'주별',month:'월별',year:'연별'})[S.period]} 지수 데이터`:(chartResponse?.error||'차트 데이터가 없습니다.');}
 const rows=marketRows(m),latest=rows[0];for(const t of ['individual','foreign','institution'])$(k+'-'+t).textContent=latest&&latest[t]!==null?fmt(latest[t]):'—';setTable(k+'-flow-table',rows.slice(0,S.days).map(r=>[r.date,fmt(r.individual),fmt(r.foreign),fmt(r.institution)]),4);
 const series=['individual','foreign','institution'].map(t=>({color:COLORS[t],values:rows.slice(0,S.days).reverse().map(r=>r[t]).filter(v=>v!==null)}));draw(k+'-flow-chart',series,true);
 const flowStatus=d.aggregate?.error||d.aggregate?.statusText||'';$(k+'-flow-note').textContent=rows.length?`수급 데이터 ${rows.length}개 행 수신 · 단위/기준은 원본 응답을 따릅니다.`:(flowStatus||'투자자 수급 행을 판독하지 못했습니다. API 원본 응답을 확인해야 합니다.');
