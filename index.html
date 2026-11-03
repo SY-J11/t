@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f3f5f9">
+<link rel="apple-touch-icon" href="./Stock_supply.png">
 <title>시장 수급 | MARKET FLOW</title>
 <style>
 :root{--bg:#f3f5f9;--card:#fff;--line:#e6eaf1;--text:#202938;--muted:#929dad;--navy:#263e60;--red:#e34b55;--blue:#3478d4;--green:#159b76}
@@ -26,6 +27,9 @@ main{padding:10px}.topline{display:flex;align-items:center;justify-content:space
 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}.two .card{margin:0}
 .market-switch{display:flex;gap:5px}.market-switch button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 9px;font-size:10px}.market-switch button.active{background:var(--navy);color:#fff}
 .debug{font-size:10px;color:#9aa3af;word-break:break-all;line-height:1.5}.footer{font-size:10px;color:var(--muted);line-height:1.6;padding:8px 3px 0}
+.vol-box{display:flex;align-items:center;justify-content:space-between;background:#f7f8fa;border-radius:9px;padding:11px 12px;margin-bottom:7px}.vol-box span{color:var(--muted);font-size:11px}.vol-box b{font-size:17px;letter-spacing:-.3px}
+.sub-h{font-size:11px;font-weight:750;color:#4d5a6e;margin:12px 1px 4px}.sub-h small{font-weight:400;color:var(--muted);margin-left:5px}
+.more-box{display:flex;gap:6px;margin-top:8px}.more-box:empty{display:none}.more-box button{flex:1;border:1px solid var(--line);background:#f8f9fb;border-radius:9px;padding:9px 8px;font-size:11px;color:#58667b;font-weight:700}.more-box button:active{background:#eaf0f7}
 .loading{opacity:.55;pointer-events:none}
 @media(min-width:700px){.app{padding-left:8px;padding-right:8px}.chart{height:230px}.chart.tall{height:250px}.two{grid-template-columns:1fr 1fr}}
 @media(max-width:380px){main{padding:8px}.summary{gap:5px}.sum{padding:8px 6px}.sum b{font-size:12px}.index-value{font-size:24px}.nav button{padding:8px 11px}}
@@ -53,20 +57,30 @@ main{padding:10px}.topline{display:flex;align-items:center;justify-content:space
 </div>
 <div class="card">
 <div class="card-title"><b>투자자별 순매수</b><span class="sub">단위: 억원 · 원본 기준</span></div>
+<div class="vol-box"><span>당일 거래량</span><b id="kospi-volume">—</b></div>
 <div class="summary"><div class="sum"><span>개인</span><b id="kospi-individual">—</b></div><div class="sum"><span>외국인</span><b id="kospi-foreign">—</b></div><div class="sum"><span>기관</span><b id="kospi-institution">—</b></div></div>
+<div class="sub-h">당일 시간별 투자자별 순매수<small id="kospi-intra-date"></small></div>
 <div class="chart"><canvas id="kospi-flow-chart"></canvas></div>
 <div class="legend"><span><i style="background:#e34b55"></i>개인</span><span><i style="background:#3478d4"></i>외국인</span><span><i style="background:#159b76"></i>기관</span></div>
 <div class="note" id="kospi-flow-note">시장 집계 수급 데이터를 확인하고 있습니다.</div>
 </div>
-<div class="card"><div class="card-title"><b>일별 투자자 수급</b><span class="sub">최근 거래일</span></div><div class="table-scroll"><table><thead><tr><th>날짜</th><th>개인</th><th>외국인</th><th>기관</th></tr></thead><tbody id="kospi-flow-table"><tr><td colspan="4" class="empty">데이터 요청 중</td></tr></tbody></table></div></div>
-<div class="card"><div class="card-title"><b>프로그램 매매</b><span class="sub">차익 · 비차익 · 전체</span></div><div class="table-scroll"><table><thead><tr><th>구분</th><th>매수</th><th>매도</th><th>순매수</th></tr></thead><tbody id="kospi-program"><tr><td colspan="4" class="empty">데이터 요청 중</td></tr></tbody></table></div></div>
+<div class="card"><div class="card-title"><b>일별 투자자 수급</b><span class="sub">최근 10일 · 단위: 억원</span></div><div class="table-scroll"><table><thead><tr><th>일자</th><th>개인</th><th>외국인</th><th>기관</th></tr></thead><tbody id="kospi-flow-table"><tr><td colspan="4" class="empty">데이터 요청 중</td></tr></tbody></table></div><div class="more-box" id="kospi-flow-more"></div></div>
+<div class="card"><div class="card-title"><b>프로그램 매매</b><span class="sub">최근 10일 · 순매수 기준</span></div><div class="table-scroll"><table><thead><tr><th>일자</th><th>차익</th><th>비차익</th><th>합계</th></tr></thead><tbody id="kospi-program"><tr><td colspan="4" class="empty">데이터 요청 중</td></tr></tbody></table></div><div class="more-box" id="kospi-program-more"></div></div>
 </section>
 
 <section class="panel" id="panel-kosdaq">
 <div class="card"><div class="card-title"><b>코스닥 종합</b><span class="sub">KOSDAQ · 지수</span></div><div class="index-main"><span class="index-value" id="kosdaq-value">—</span><span class="index-change muted" id="kosdaq-change">—</span></div><div class="chart"><canvas id="kosdaq-chart"></canvas></div><div class="note" id="kosdaq-index-note">지수 데이터를 불러오고 있습니다.</div></div>
-<div class="card"><div class="card-title"><b>투자자별 순매수</b><span class="sub">단위: 억원 · 원본 기준</span></div><div class="summary"><div class="sum"><span>개인</span><b id="kosdaq-individual">—</b></div><div class="sum"><span>외국인</span><b id="kosdaq-foreign">—</b></div><div class="sum"><span>기관</span><b id="kosdaq-institution">—</b></div></div><div class="chart"><canvas id="kosdaq-flow-chart"></canvas></div><div class="legend"><span><i style="background:#e34b55"></i>개인</span><span><i style="background:#3478d4"></i>외국인</span><span><i style="background:#159b76"></i>기관</span></div><div class="note" id="kosdaq-flow-note">시장 집계 수급 데이터를 확인하고 있습니다.</div></div>
-<div class="card"><div class="card-title"><b>일별 투자자 수급</b><span class="sub">최근 거래일</span></div><div class="table-scroll"><table><thead><tr><th>날짜</th><th>개인</th><th>외국인</th><th>기관</th></tr></thead><tbody id="kosdaq-flow-table"><tr><td colspan="4" class="empty">데이터 요청 중</td></tr></tbody></table></div></div>
-<div class="card"><div class="card-title"><b>프로그램 매매</b></div><div class="table-scroll"><table><thead><tr><th>구분</th><th>매수</th><th>매도</th><th>순매수</th></tr></thead><tbody id="kosdaq-program"><tr><td colspan="4" class="empty">데이터 요청 중</td></tr></tbody></table></div></div>
+<div class="card">
+<div class="card-title"><b>투자자별 순매수</b><span class="sub">단위: 억원 · 원본 기준</span></div>
+<div class="vol-box"><span>당일 거래량</span><b id="kosdaq-volume">—</b></div>
+<div class="summary"><div class="sum"><span>개인</span><b id="kosdaq-individual">—</b></div><div class="sum"><span>외국인</span><b id="kosdaq-foreign">—</b></div><div class="sum"><span>기관</span><b id="kosdaq-institution">—</b></div></div>
+<div class="sub-h">당일 시간별 투자자별 순매수<small id="kosdaq-intra-date"></small></div>
+<div class="chart"><canvas id="kosdaq-flow-chart"></canvas></div>
+<div class="legend"><span><i style="background:#e34b55"></i>개인</span><span><i style="background:#3478d4"></i>외국인</span><span><i style="background:#159b76"></i>기관</span></div>
+<div class="note" id="kosdaq-flow-note">시장 집계 수급 데이터를 확인하고 있습니다.</div>
+</div>
+<div class="card"><div class="card-title"><b>일별 투자자 수급</b><span class="sub">최근 10일 · 단위: 억원</span></div><div class="table-scroll"><table><thead><tr><th>일자</th><th>개인</th><th>외국인</th><th>기관</th></tr></thead><tbody id="kosdaq-flow-table"><tr><td colspan="4" class="empty">데이터 요청 중</td></tr></tbody></table></div><div class="more-box" id="kosdaq-flow-more"></div></div>
+<div class="card"><div class="card-title"><b>프로그램 매매</b><span class="sub">최근 10일 · 순매수 기준</span></div><div class="table-scroll"><table><thead><tr><th>일자</th><th>차익</th><th>비차익</th><th>합계</th></tr></thead><tbody id="kosdaq-program"><tr><td colspan="4" class="empty">데이터 요청 중</td></tr></tbody></table></div><div class="more-box" id="kosdaq-program-more"></div></div>
 </section>
 
 <section class="panel" id="panel-futures">
@@ -91,11 +105,11 @@ main{padding:10px}.topline{display:flex;align-items:center;justify-content:space
 'use strict';
 const WORKER='https://supply.mcraft-tiger-574.workers.dev';
 const $=id=>document.getElementById(id);
-const S={tab:'kospi',days:60,cum:10,cumMarket:'KOSPI',period:'day',raw:null,markets:{}};
+const S={tab:'kospi',days:60,cum:10,cumMarket:'KOSPI',period:'day',raw:null,markets:{},page:{}};
 const COLORS={individual:'#e34b55',foreign:'#3478d4',institution:'#159b76'};
 const fmt=(v,d=0)=>Number.isFinite(Number(v))?Number(v).toLocaleString('ko-KR',{maximumFractionDigits:d}):'—';
 const num=v=>{if(v===null||v===undefined||v==='')return null;const n=Number(String(v).replace(/[,+%원\s]/g,''));return Number.isFinite(n)?n:null};
-const keys={individual:['individualNetBuy','individualNetVolume','individualPureBuy','individualNet',' 개인순매수','individual'],foreign:['foreignNetBuy','foreignerNetVolume','foreignerPureBuy','foreignNetVolume','foreignNet','foreign'],institution:['institutionNetBuy','organizationNetVolume','organPureBuy','organizationPureBuy','institutionNet','organizationNet','institution']};
+const keys={individual:['individualNetBuy','individualNetVolume','individualPureBuy','individualNet',' 개인순매수','individual','personalValue','personalNetBuyValue','individualValue','personalNetBuy'],foreign:['foreignNetBuy','foreignerNetVolume','foreignerPureBuy','foreignNetVolume','foreignNet','foreign','foreignerValue','foreignValue','foreignerNetBuyValue'],institution:['institutionNetBuy','organizationNetVolume','organPureBuy','organizationPureBuy','institutionNet','organizationNet','institution','institutionalValue','institutionValue','organValue','institutionalNetBuyValue']};
 function findRows(root,depth=0,out=[]){if(!root||depth>7)return out;if(Array.isArray(root)){if(root.length&&root.some(x=>x&&typeof x==='object'&&!Array.isArray(x)))out.push(root);root.slice(0,50).forEach(x=>findRows(x,depth+1,out));}else if(typeof root==='object')Object.values(root).forEach(x=>findRows(x,depth+1,out));return out}
 function dateOf(o){if(!o||typeof o!=='object')return '';for(const k of ['localTradedAt','localDate','bizdate','bizDate','tradeDate','date','tradingDate','baseDate','yyyymmdd'])if(o[k]){const s=String(o[k]).replace(/\D/g,'');if(s.length>=8)return s.slice(0,8)}return ''}
 function getField(o,arr){if(!o||typeof o!=='object')return null;for(const k of arr){if(o[k]!==undefined&&o[k]!==null){const n=num(o[k]);if(n!==null)return n}}return null}
@@ -171,15 +185,77 @@ function drawCandleChart(id,rows){
 }
 function setTable(id,rows,cols){const el=$(id);if(!el)return;if(!rows.length){el.innerHTML=`<tr><td colspan="${cols}" class="empty">원본 응답에서 표시 가능한 행을 확인하지 못했습니다.</td></tr>`;return}el.innerHTML=rows.map(r=>'<tr>'+r.map((v,i)=>`<td class="${typeof v==='number'?(v>0?'red':v<0?'blue':'muted'):''}">${v===null?'—':v}</td>`).join('')+'</tr>').join('')}
 function draw(id,series,zero=false){const c=$(id);if(!c)return;const w=Math.max(c.clientWidth,280),h=Math.max(c.clientHeight,150),d=devicePixelRatio||1;c.width=w*d;c.height=h*d;const ctx=c.getContext('2d');ctx.scale(d,d);ctx.clearRect(0,0,w,h);const vals=series.flatMap(s=>s.values||[]).filter(Number.isFinite);if(!vals.length){ctx.fillStyle='#929dad';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText('표시할 시계열 데이터가 없습니다',w/2,h/2);return}let lo=Math.min(...vals),hi=Math.max(...vals);if(zero){lo=Math.min(lo,0);hi=Math.max(hi,0)}if(lo===hi){lo-=1;hi+=1}const p={l:43,r:8,t:10,b:19},cw=w-p.l-p.r,ch=h-p.t-p.b;ctx.font='9px sans-serif';for(let i=0;i<4;i++){const y=p.t+ch*i/3;ctx.strokeStyle='#edf0f4';ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();ctx.fillStyle='#929dad';ctx.textAlign='right';ctx.fillText(fmt(hi-(hi-lo)*i/3,0),p.l-5,y+3)}if(zero&&lo<0&&hi>0){const y=p.t+ch*hi/(hi-lo);ctx.strokeStyle='#bbc4d0';ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();ctx.setLineDash([])}for(const s of series){if(!s.values?.length)continue;ctx.strokeStyle=s.color;ctx.lineWidth=2;ctx.lineJoin='round';ctx.beginPath();s.values.forEach((v,i)=>{const x=p.l+cw*(s.values.length===1?0:i/(s.values.length-1)),y=p.t+ch*(hi-v)/(hi-lo);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()}}
-function marketRows(m){const raw=S.markets[m]||{};return raw.flowRows||normalizeFlow(raw.aggregate)}
+
+const fmtDate=s=>/^\d{8}$/.test(s)?`${s.slice(0,4)}.${s.slice(4,6)}.${s.slice(6,8)}`:(s||'—');
+function timeOf(o){if(!o||typeof o!=='object')return '';for(const k of ['localTradedAt','tradedAt','dateTime','datetime','time','tradeTime','baseTime','bizTime','localTime','hhmm']){if(o[k]===undefined||o[k]===null)continue;const dg=String(o[k]).replace(/\D/g,'');if(dg.length>=12)return dg.slice(8,12);if(dg.length>=4&&dg.length<=6&&/time|hhmm/i.test(k))return dg.slice(0,4)}return ''}
+function intradayRows(payload){
+ const out=[];
+ for(const arr of findRows(payload).sort((a,b)=>b.length-a.length)){
+  for(const o of arr){if(!o||typeof o!=='object')continue;const time=timeOf(o);if(!time)continue;const row={date:dateOf(o)||'0',time,individual:getField(o,keys.individual),foreign:getField(o,keys.foreign),institution:getField(o,keys.institution)};if(row.individual!==null||row.foreign!==null||row.institution!==null)out.push(row)}
+  if(out.length)break;
+ }
+ if(!out.length)return [];
+ const day=out.map(r=>r.date).sort().at(-1);
+ return out.filter(r=>r.date===day).sort((a,b)=>a.time.localeCompare(b.time));
+}
+function dedupeByDate(rows){const m=new Map();for(const r of rows){const t=timeOf(r.raw);const old=m.get(r.date);if(!old||t>=old.t)m.set(r.date,{t,r})}return [...m.values()].map(x=>x.r).sort((a,b)=>b.date.localeCompare(a.date))}
+function dailyFlowRows(raw){
+ for(const src of [raw?.daily?.data,raw?.aggregateDaily?.data,raw?.aggregate?.data]){if(!src)continue;const rows=dedupeByDate(normalizeFlow(src));if(rows.length)return rows}
+ return [];
+}
+function flatten(o,prefix='',depth=0,out={}){for(const [k,v] of Object.entries(o||{})){const key=prefix?prefix+'_'+k:k;if(v&&typeof v==='object'&&!Array.isArray(v)&&depth<2)flatten(v,key,depth+1,out);else out[key]=v}return out}
+function pickBy(f,res){for(const re of res){for(const [k,v] of Object.entries(f)){if(re.test(k)){const n=num(v);if(n!==null)return n}}}return null}
+function normalizeProgram(payload){
+ for(const arr of findRows(payload).sort((a,b)=>b.length-a.length)){
+  const rows=[];
+  for(const o of arr){
+   if(!o||typeof o!=='object')continue;const date=dateOf(o);if(!date)continue;const f=flatten(o);
+   const arb=pickBy(f,[/^(?!.*non).*arbitrage.*(net|pure)/i,/^(?!.*non).*arbitrage/i]);
+   const non=pickBy(f,[/non.?arbitrage.*(net|pure)/i,/non.?arbitrage/i]);
+   let tot=pickBy(f,[/(total|sum|whole|all).*(net|pure)/i,/(net|pure).*(total|sum|whole|all)/i,/total|sum/i]);
+   if(tot===null&&arb!==null&&non!==null)tot=arb+non;
+   if(arb!==null||non!==null||tot!==null)rows.push({date,arb,non,tot,raw:o});
+  }
+  if(rows.length){const m=new Map();for(const r of rows){const t=timeOf(r.raw);const old=m.get(r.date);if(!old||t>=old.t)m.set(r.date,{t,r})}return [...m.values()].map(x=>x.r).sort((a,b)=>b.date.localeCompare(a.date))}
+ }
+ return [];
+}
+function numTable(id,rows,cols){const el=$(id);if(!el)return;if(!rows.length){el.innerHTML=`<tr><td colspan="${cols}" class="empty">원본 응답에서 표시 가능한 행을 확인하지 못했습니다.</td></tr>`;return}el.innerHTML=rows.map(r=>'<tr>'+r.map((v,i)=>i===0?`<td>${v}</td>`:`<td class="${v===null?'muted':v>0?'red':v<0?'blue':'muted'}">${v===null?'—':fmt(v)}</td>`).join('')+'</tr>').join('')}
+function renderPaged(key,tbodyId,boxId,rows,toRow,cols){
+ const n=S.page[key]||10;numTable(tbodyId,rows.slice(0,n).map(toRow),cols);
+ const box=$(boxId);if(!box)return;const parts=[];
+ if(rows.length>n)parts.push(`<button data-more="${key}">▼ 10일 더 보기 (${n}/${rows.length})</button>`);
+ if(n>10)parts.push(`<button data-less="${key}">▲ 접기</button>`);
+ box.innerHTML=parts.join('');
+}
+function drawIntraday(id,rows){
+ const c=$(id);if(!c)return;const w=Math.max(c.clientWidth,280),h=Math.max(c.clientHeight,170),d=devicePixelRatio||1;c.width=w*d;c.height=h*d;const ctx=c.getContext('2d');ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,w,h);
+ const types=['individual','foreign','institution'];const vals=rows.flatMap(r=>types.map(t=>r[t])).filter(Number.isFinite);
+ if(!vals.length){ctx.fillStyle='#929dad';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText('당일 시간별 수급 데이터가 없습니다',w/2,h/2);return}
+ let lo=Math.min(0,...vals),hi=Math.max(0,...vals);if(lo===hi){lo-=1;hi+=1}const padV=(hi-lo)*.05;lo-=padV;hi+=padV;
+ const mins=t=>Number(t.slice(0,2))*60+Number(t.slice(2,4));
+ let x0=540,x1=930;const tm=rows.map(r=>mins(r.time));x0=Math.min(x0,...tm);x1=Math.max(x1,...tm);
+ const p={l:46,r:8,t:10,b:20},cw=w-p.l-p.r,ch=h-p.t-p.b,X=m=>p.l+cw*(m-x0)/(x1-x0),Y=v=>p.t+ch*(hi-v)/(hi-lo);
+ ctx.font='9px sans-serif';ctx.lineWidth=1;
+ for(let i=0;i<4;i++){const v=hi-(hi-lo)*i/3,y=Y(v);ctx.strokeStyle='#edf0f4';ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();ctx.fillStyle='#929dad';ctx.textAlign='right';ctx.fillText(fmt(v,0),p.l-5,y+3)}
+ ctx.textAlign='center';for(let hr=Math.ceil(x0/60);hr*60<=x1;hr++){const x=X(hr*60);ctx.strokeStyle='#f1f3f7';ctx.beginPath();ctx.moveTo(x,p.t);ctx.lineTo(x,p.t+ch);ctx.stroke();ctx.fillStyle='#929dad';ctx.fillText(String(hr).padStart(2,'0')+':00',x,h-5)}
+ const zy=Y(0);ctx.strokeStyle='#bbc4d0';ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(p.l,zy);ctx.lineTo(w-p.r,zy);ctx.stroke();ctx.setLineDash([]);
+ for(const t of types){ctx.strokeStyle=COLORS[t];ctx.lineWidth=2;ctx.lineJoin='round';ctx.beginPath();let st=false;rows.forEach(r=>{if(!Number.isFinite(r[t]))return;const x=X(mins(r.time)),y=Y(r[t]);if(!st){ctx.moveTo(x,y);st=true}else ctx.lineTo(x,y)});ctx.stroke()}
+}
+function marketRows(m){const raw=S.markets[m]||{};return raw.flowRows||dailyFlowRows(raw)}
 function renderMarket(m){const k=m.toLowerCase(),d=S.markets[m]||{},quote=normalizeIndex(d.index?.data||d.index),last=quote.at(-1);if(last){$(k+'-value').textContent=fmt(last.close,2);const delta=last.change,rate=last.rate;$(k+'-change').textContent=delta===null?'—':`${delta>0?'+':''}${fmt(delta,2)} (${rate===null?'—':rate.toFixed(2)+'%'})`;$(k+'-change').className='index-change '+(delta>0?'red':delta<0?'blue':'muted');}else{$(k+'-value').textContent='—';$(k+'-change').textContent='—';}
 const chartResponse=d.charts?.[S.period];const bars=normalizeChartPayload(chartResponse?.data||chartResponse).slice(-120);if(m==='KOSPI'){drawCandleChart(k+'-chart',bars);const err=chartResponse?.error;$(k+'-index-note').textContent=bars.length?`${bars.length}개 ${({day:'일봉',week:'주봉',month:'월봉',year:'연봉'})[S.period]} · 이동평균 5·10·20·40·60·120 · 거래량`:(err?`네이버 차트 API 오류: ${err}`:'차트 응답은 받았지만 OHLC 데이터를 찾지 못했습니다.');}else{draw(k+'-chart',[{color:'#3478d4',values:bars.map(x=>x.close)}]);$(k+'-index-note').textContent=bars.length?`${bars.length}개 ${({day:'일별',week:'주별',month:'월별',year:'연별'})[S.period]} 지수 데이터`:(chartResponse?.error||'차트 데이터가 없습니다.');}
-const rows=marketRows(m),latest=rows[0];for(const t of ['individual','foreign','institution'])$(k+'-'+t).textContent=latest&&latest[t]!==null?fmt(latest[t]):'—';setTable(k+'-flow-table',rows.slice(0,S.days).map(r=>[r.date,fmt(r.individual),fmt(r.foreign),fmt(r.institution)]),4);
-const series=['individual','foreign','institution'].map(t=>({color:COLORS[t],values:rows.slice(0,S.days).reverse().map(r=>r[t]).filter(v=>v!==null)}));draw(k+'-flow-chart',series,true);
-const flowStatus=d.aggregate?.error||d.aggregate?.statusText||'';$(k+'-flow-note').textContent=rows.length?`수급 데이터 ${rows.length}개 행 수신 · 단위/기준은 원본 응답을 따릅니다.`:(flowStatus||'투자자 수급 행을 판독하지 못했습니다. API 원본 응답을 확인해야 합니다.');
-const programData=d.program?.data||null;
-setTable(k+'-program',[],4);
-if(programData){$(''+k+'-program').innerHTML='<tr><td colspan="4" class="empty">프로그램 원본 응답 수신 · 차익/비차익 매수·매도 필드 확인 후 표시</td></tr>';}
+const intra=intradayRows(d.aggregate),daily=marketRows(m),cur=intra.length?intra.at(-1):daily[0];
+for(const t of ['individual','foreign','institution'])$(k+'-'+t).textContent=cur&&cur[t]!==null?fmt(cur[t]):'—';
+let vol=last?last.volume:null;if(vol===null||vol===undefined){const dc=normalizeChartPayload(d.charts?.day?.data||d.charts?.day);vol=dc.length?dc[dc.length-1].volume:null}
+$(k+'-volume').textContent=vol===null||vol===undefined?'—':fmt(vol);
+drawIntraday(k+'-flow-chart',intra);
+$(k+'-intra-date').textContent=intra.length?`${fmtDate(intra[0].date)} ${intra[0].time.slice(0,2)}:${intra[0].time.slice(2)}~${intra.at(-1).time.slice(0,2)}:${intra.at(-1).time.slice(2)}`:'';
+const flowStatus=d.aggregate?.error||'';$(k+'-flow-note').textContent=intra.length?`당일 ${intra.length}개 시점 · 값은 원본 응답 그대로 표시합니다(단위/누적 여부는 원본 기준).`:(flowStatus||'당일 시간별 수급 행을 판독하지 못했습니다. Worker를 최신 버전으로 배포했는지 확인하세요.');
+renderPaged(m+'-flow',k+'-flow-table',k+'-flow-more',daily,r=>[fmtDate(r.date),r.individual,r.foreign,r.institution],4);
+const prog=normalizeProgram(d.programDaily?.data||d.program?.data||null);
+renderPaged(m+'-program',k+'-program',k+'-program-more',prog,r=>[fmtDate(r.date),r.arb,r.non,r.tot],4);
+if(!prog.length&&(d.programDaily?.error||d.program?.error))$(k+'-program').innerHTML=`<tr><td colspan="4" class="empty">프로그램 매매 응답 오류: ${d.programDaily?.error||d.program?.error}</td></tr>`;
 }
 function renderFutures(){const d=S.markets.FUT||{},rows=marketRows('FUT'),latest=rows[0];for(const t of ['individual','foreign','institution'])$('fut-'+t).textContent=latest&&latest[t]!==null?fmt(latest[t]):'—';setTable('fut-flow-table',rows.slice(0,S.days).map(r=>[r.date,fmt(r.individual),fmt(r.foreign),fmt(r.institution)]),4);draw('fut-flow-chart',['individual','foreign','institution'].map(t=>({color:COLORS[t],values:rows.slice(0,S.days).reverse().map(r=>r[t]).filter(v=>v!==null)})),true);$('fut-flow-note').textContent=rows.length?`선물 시장 수급 ${rows.length}개 행 수신. 금액/계약 단위는 원본 필드 확인 후 표시합니다.`:'선물 수급 응답에 표시 가능한 날짜별 행이 없습니다.';
 const px=normalizeIndex(d.index?.data||d.index);if(px.length){const l=px.at(-1);$('fut-value').textContent=fmt(l.close,2);draw('fut-chart',[{color:'#3478d4',values:px.slice(-S.days).map(x=>x.close)}]);$('fut-index-note').textContent='선물 가격 데이터 수신'}else{$('fut-value').textContent='—';$('fut-change').textContent='—';draw('fut-chart',[]);$('fut-index-note').textContent='코스피200 현물지수와 선물가격을 혼동하지 않도록 선물 가격은 별도 검증된 계약 데이터 연결 전까지 표시하지 않습니다.'}}
@@ -191,6 +267,7 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
 document.querySelectorAll('[data-period]').forEach(b=>b.addEventListener('click',()=>{S.period=b.dataset.period;document.querySelectorAll('[data-period]').forEach(x=>x.classList.toggle('active',x===b));renderMarket('KOSPI');renderMarket('KOSDAQ');}));
 document.querySelectorAll('[data-cum]').forEach(b=>b.addEventListener('click',()=>{S.cum=Number(b.dataset.cum);document.querySelectorAll('[data-cum]').forEach(x=>x.classList.toggle('active',x===b));renderCumulative()}));
 document.querySelectorAll('[data-market]').forEach(b=>b.addEventListener('click',()=>{S.cumMarket=b.dataset.market;document.querySelectorAll('[data-market]').forEach(x=>x.classList.toggle('active',x===b));renderCumulative()}));
+document.addEventListener('click',e=>{const b=e.target.closest('[data-more],[data-less]');if(!b)return;const more=b.dataset.more,less=b.dataset.less,key=more||less;S.page[key]=more?(S.page[key]||10)+10:10;renderMarket(key.split('-')[0])});
 $('refresh').addEventListener('click',load);window.addEventListener('resize',()=>{if(S.markets.KOSPI)renderMarket('KOSPI');if(S.markets.KOSDAQ)renderMarket('KOSDAQ');renderFutures();if(S.tab==='compare')renderCompare();if(S.tab==='cumulative')renderCumulative()});
 load();
 </script>
