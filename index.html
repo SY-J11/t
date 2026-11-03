@@ -114,7 +114,10 @@ const keys={individual:['individualNetBuy','individualNetVolume','individualPure
 function findRows(root,depth=0,out=[]){if(!root||depth>7)return out;if(Array.isArray(root)){if(root.length&&root.some(x=>x&&typeof x==='object'&&!Array.isArray(x)))out.push(root);root.slice(0,50).forEach(x=>findRows(x,depth+1,out));}else if(typeof root==='object')Object.values(root).forEach(x=>findRows(x,depth+1,out));return out}
 function dateOf(o){if(!o||typeof o!=='object')return '';for(const k of ['localTradedAt','localDate','bizdate','bizDate','tradeDate','date','tradingDate','baseDate','yyyymmdd'])if(o[k]){const s=String(o[k]).replace(/\D/g,'');if(s.length>=8)return s.slice(0,8)}return ''}
 function getField(o,arr){if(!o||typeof o!=='object')return null;for(const k of arr){if(o[k]!==undefined&&o[k]!==null){const n=num(o[k]);if(n!==null)return n}}return null}
-function normalizeFlow(payload){const candidates=findRows(payload).sort((a,b)=>b.length-a.length);for(const arr of candidates){const rows=[];for(const o of arr){if(!o||typeof o!=='object')continue;const date=dateOf(o);if(!date)continue;const row={date,individual:getField(o,keys.individual),foreign:getField(o,keys.foreign),institution:getField(o,keys.institution),raw:o};if(row.individual!==null||row.foreign!==null||row.institution!==null)rows.push(row)}if(rows.length)return rows.sort((a,b)=>b.date.localeCompare(a.date))}return []}
+
+const FUZZY={individual:[/(individual|personal|retail).*(net|pure)/i,/^(individual|personal|retail)(value|amount|trade)?$/i],foreign:[/foreign.*(net|pure)/i,/^foreign(er)?(value|amount|trade)?$/i],institution:[/(institution|organ).*(net|pure)/i,/^(institution|institutional|organ|organization)(value|amount|trade)?$/i]};
+function flowVal(o,t){const v=getField(o,keys[t]);if(v!==null)return v;const f=flatten(o);for(const re of FUZZY[t]){for(const [k,x] of Object.entries(f)){if(re.test(k)){const n=num(x);if(n!==null)return n}}}return null}
+function normalizeFlow(payload){const candidates=findRows(payload).sort((a,b)=>b.length-a.length);for(const arr of candidates){const rows=[];for(const o of arr){if(!o||typeof o!=='object')continue;const date=dateOf(o);if(!date)continue;const row={date,individual:flowVal(o,'individual'),foreign:flowVal(o,'foreign'),institution:flowVal(o,'institution'),raw:o};if(row.individual!==null||row.foreign!==null||row.institution!==null)rows.push(row)}if(rows.length)return rows.sort((a,b)=>b.date.localeCompare(a.date))}return []}
 function normalizeIndex(payload){
  const candidates=[];
  if(Array.isArray(payload))candidates.push(payload);
@@ -260,11 +263,19 @@ function renderDiag(){
   for(const e of (S.errors||[]).filter(e=>String(e.source).toUpperCase().startsWith(m)).slice(0,4))L.push('  dashboard 오류 '+e.source+': '+String(e.message).slice(0,120));
   const idx=d.index?.data;L.push('  지수 응답 키: '+(idx&&typeof idx==='object'?Object.keys(flatten(idx)).slice(0,40).join(', '):'없음'));
   if(f.intraday?.rows?.[0])L.push('  시간별 첫 행: '+JSON.stringify(f.intraday.rows[0]));
+  L.push(`  일별 수급 행: JSON ${dedupeByDate(normalizeFlow(d.daily?.data)).length} / HTML ${htmlDaily(f).length} → 사용 ${marketRows(m).length}`);
+  L.push(`  프로그램 행: JSON ${normalizeProgram(d.programDaily?.data).length} / HTML ${htmlProgram(f).length} → 사용 ${programRows(m).length}`);
+  const s1=findRows(d.daily?.data)[0]?.[0],s2=findRows(d.programDaily?.data)[0]?.[0];
+  if(s1)L.push('  daily 응답 필드: '+Object.keys(flatten(s1)).slice(0,24).join(', '));
+  if(s2)L.push('  program 응답 필드: '+Object.keys(flatten(s2)).slice(0,24).join(', '));
  }
  el.textContent=L.join('\n');
 }
 async function loadFlow(){await Promise.all(['KOSPI','KOSDAQ'].map(async m=>{try{const r=await fetch(`${WORKER}?action=flow&market=${m}`,{cache:'no-store'});const j=await r.json();S.flow[m]=j&&j.ok&&j.intraday?j:{errors:[{source:m+'.flow',message:(j&&j.ok&&!j.intraday)?'워커가 구버전입니다. cloudflare_worker.js를 다시 배포하세요':((j&&j.error)||('HTTP '+r.status))}]}}catch(e){S.flow[m]={errors:[{source:m+'.flow',message:e.message}]}}}));renderMarket('KOSPI');renderMarket('KOSDAQ');renderDiag();if(S.tab==='compare')renderCompare();if(S.tab==='cumulative')renderCumulative()}
-function marketRows(m){const raw=S.markets[m]||{};const h=htmlDaily(S.flow[m]);return h.length?h:(raw.flowRows||dailyFlowRows(raw))}
+function bestOf(cands){let best=[];for(const c of cands){let r=[];try{r=c()||[]}catch(e){}if(r.length>best.length)best=r}return best}
+function dailySources(m){const raw=S.markets[m]||{};return [()=>raw.flowRows,()=>dedupeByDate(normalizeFlow(raw.daily?.data)),()=>dedupeByDate(normalizeFlow(raw.aggregateDaily?.data)),()=>htmlDaily(S.flow[m])]}
+function marketRows(m){const r=bestOf(dailySources(m));if(r.length)return r;const raw=S.markets[m]||{};return dedupeByDate(normalizeFlow(raw.aggregate?.data))}
+function programRows(m){const raw=S.markets[m]||{};return bestOf([()=>normalizeProgram(raw.programDaily?.data),()=>htmlProgram(S.flow[m]),()=>normalizeProgram(raw.program?.data)])}
 function renderMarket(m){const k=m.toLowerCase(),d=S.markets[m]||{},quote=normalizeIndex(d.index?.data||d.index),last=quote.at(-1);if(last){$(k+'-value').textContent=fmt(last.close,2);const delta=last.change,rate=last.rate;$(k+'-change').textContent=delta===null?'—':`${delta>0?'+':''}${fmt(delta,2)} (${rate===null?'—':rate.toFixed(2)+'%'})`;$(k+'-change').className='index-change '+(delta>0?'red':delta<0?'blue':'muted');}else{$(k+'-value').textContent='—';$(k+'-change').textContent='—';}
 const chartResponse=d.charts?.[S.period];const bars=normalizeChartPayload(chartResponse?.data||chartResponse).slice(-120);if(m==='KOSPI'){drawCandleChart(k+'-chart',bars);const err=chartResponse?.error;$(k+'-index-note').textContent=bars.length?`${bars.length}개 ${({day:'일봉',week:'주봉',month:'월봉',year:'연봉'})[S.period]} · 이동평균 5·10·20·40·60·120 · 거래량`:(err?`네이버 차트 API 오류: ${err}`:'차트 응답은 받았지만 OHLC 데이터를 찾지 못했습니다.');}else{draw(k+'-chart',[{color:'#3478d4',values:bars.map(x=>x.close)}]);$(k+'-index-note').textContent=bars.length?`${bars.length}개 ${({day:'일별',week:'주별',month:'월별',year:'연별'})[S.period]} 지수 데이터`:(chartResponse?.error||'차트 데이터가 없습니다.');}
 const fl=S.flow[m];let intra=htmlIntraday(fl);if(!intra.length)intra=intradayRows(d.aggregate);const daily=marketRows(m),cur=intra.length?intra.at(-1):daily[0];
@@ -277,7 +288,7 @@ $(k+'-intra-date').textContent=intra.length?`${fmtDate(intra[0].date)} ${intra[0
 const errs=[...(S.errors||[]),...(fl?.errors||[])].filter(e=>String(e.source).toUpperCase().startsWith(m)).map(e=>e.source+': '+e.message).slice(0,3).join(' / ');
 $(k+'-flow-note').textContent=intra.length?`당일 ${intra.length}개 시점 · 시간별 누적 순매수(억원) · 최신 ${intra.at(-1).time.slice(0,2)}:${intra.at(-1).time.slice(2)}`:('당일 시간별 수급 데이터를 받지 못했습니다.'+(errs?' ['+errs+']':''));
 renderPaged(m+'-flow',k+'-flow-table',k+'-flow-more',daily,r=>[fmtDate(r.date),r.individual,r.foreign,r.institution],4);
-let prog=htmlProgram(fl);if(!prog.length)prog=normalizeProgram(d.programDaily?.data||d.program?.data||null);
+const prog=programRows(m);
 renderPaged(m+'-program',k+'-program',k+'-program-more',prog,r=>[fmtDate(r.date),r.arb,r.non,r.tot],4);
 if(!prog.length&&(d.programDaily?.error||d.program?.error))$(k+'-program').innerHTML=`<tr><td colspan="4" class="empty">프로그램 매매 응답 오류: ${d.programDaily?.error||d.program?.error}</td></tr>`;
 }
