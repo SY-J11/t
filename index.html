@@ -319,7 +319,7 @@ function drawIntraday(id,rows,types=['individual','foreign','institution']){
  if(!vals.length){ctx.fillStyle='#929dad';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText('당일 시간별 수급 데이터가 없습니다',w/2,h/2);return}
  let lo=Math.min(0,...vals),hi=Math.max(0,...vals);if(lo===hi){lo-=1;hi+=1}const padV=(hi-lo)*.05;lo-=padV;hi+=padV;
  const mins=t=>Number(t.slice(0,2))*60+Number(t.slice(2,4));
- let x0=540,x1=930;const tm=rows.map(r=>mins(r.time));x0=Math.min(x0,...tm);x1=Math.max(x1,...tm);
+ const tm=rows.map(r=>mins(r.time));const x0=540,x1=Math.max(541,...tm);
  const p={l:46,r:8,t:10,b:20},cw=w-p.l-p.r,ch=h-p.t-p.b,X=m=>p.l+cw*(m-x0)/(x1-x0),Y=v=>p.t+ch*(hi-v)/(hi-lo);
  ctx.font='9px sans-serif';ctx.lineWidth=1;
  for(let i=0;i<4;i++){const v=hi-(hi-lo)*i/3,y=Y(v);ctx.strokeStyle='#edf0f4';ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();ctx.fillStyle='#929dad';ctx.textAlign='right';ctx.fillText(fmt(v,0),p.l-5,y+3)}
@@ -566,7 +566,7 @@ function drawIntradayDual(id,rows,idx,types=['individual','foreign','institution
  let lo=Math.min(0,...vals),hi=Math.max(0,...vals);if(lo===hi){lo-=1;hi+=1}const pv=(hi-lo)*.05;lo-=pv;hi+=pv;
  const iv=idx.map(r=>r.close).filter(Number.isFinite);let il=0,ih=1;if(iv.length){il=Math.min(...iv);ih=Math.max(...iv);if(il===ih){il-=1;ih+=1}const pi=(ih-il)*.1;il-=pi;ih+=pi}
  const mins=t=>Number(t.slice(0,2))*60+Number(t.slice(2,4));
- const tm=[...rows.map(r=>mins(r.time)),...idx.map(r=>mins(r.time))];let x0=Math.min(540,...tm),x1=Math.max(930,...tm);
+ const tm=[...rows.map(r=>mins(r.time)),...idx.map(r=>mins(r.time))];const x0=540,x1=Math.max(541,...tm);
  const p={l:46,r:iv.length?46:8,t:10,b:20},cw=w-p.l-p.r,ch=h-p.t-p.b,X=m=>p.l+cw*(m-x0)/(x1-x0),Y=v=>p.t+ch*(hi-v)/(hi-lo),Y2=v=>p.t+ch*(ih-v)/(ih-il);
  ctx.font='9px sans-serif';ctx.lineWidth=1;
  for(let i=0;i<4;i++){const v=hi-(hi-lo)*i/3,y=Y(v);ctx.strokeStyle='#edf0f4';ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();ctx.fillStyle='#929dad';ctx.textAlign='right';ctx.fillText(fmt(v,0),p.l-5,y+3);if(iv.length){ctx.textAlign='left';ctx.fillStyle='#26364f';ctx.fillText(fmt(ih-(ih-il)*i/3,2),w-p.r+4,y+3)}}
