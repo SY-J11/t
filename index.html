@@ -30,7 +30,7 @@ main{padding:10px}.topline{display:flex;align-items:center;justify-content:space
 .vol-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}.vol-box{background:#f7f8fa;border-radius:9px;padding:10px 10px;min-width:0}.vol-box span{display:block;color:var(--muted);font-size:10px;margin-bottom:5px}.vol-box b{font-size:15px;letter-spacing:-.3px;white-space:nowrap}
 .sub-h{font-size:11px;font-weight:750;color:#4d5a6e;margin:12px 1px 4px}.sub-h small{font-weight:400;color:var(--muted);margin-left:5px}
 .more-box{display:flex;gap:6px;margin-top:8px}.more-box:empty{display:none}.more-box button{flex:1;border:1px solid var(--line);background:#f8f9fb;border-radius:9px;padding:9px 8px;font-size:11px;color:#58667b;font-weight:700}.more-box button:active{background:#eaf0f7}
-.loading{opacity:.55;pointer-events:none}
+table.ctr th{text-align:center;vertical-align:middle}table.ctr thead tr:nth-child(2) th{border-top:1px solid var(--line)}.loading{opacity:.55;pointer-events:none}
 @media(min-width:700px){.app{padding-left:8px;padding-right:8px}.chart{height:230px}.chart.tall{height:250px}.two{grid-template-columns:1fr 1fr}}
 @media(max-width:380px){main{padding:8px}.summary{gap:5px}.sum{padding:8px 6px}.sum b{font-size:12px}.index-value{font-size:24px}.nav button{padding:8px 11px}}
 </style>
@@ -64,8 +64,8 @@ main{padding:10px}.topline{display:flex;align-items:center;justify-content:space
 <div class="legend"><span><i style="background:#e34b55"></i>개인</span><span><i style="background:#3478d4"></i>외국인</span><span><i style="background:#159b76"></i>기관</span></div>
 <div class="note" id="kospi-flow-note">시장 집계 수급 데이터를 확인하고 있습니다.</div>
 </div>
-<div class="card"><div class="card-title"><b>일별 투자자 수급</b><span class="sub">최근 10일 · 금액은 원본 단위</span></div><div class="table-scroll"><table><thead><tr><th rowspan="2">일자</th><th rowspan="2">지수</th><th rowspan="2">등락</th><th rowspan="2">등락률</th><th rowspan="2">개인</th><th rowspan="2">외국인</th><th rowspan="2">기관</th><th colspan="3" style="text-align:center">등락종목</th></tr><tr><th>상승</th><th>보합</th><th>하락</th></tr></thead><tbody id="kospi-flow-table"><tr><td colspan="10" class="empty">데이터 요청 중</td></tr></tbody></table></div><div class="more-box" id="kospi-flow-more"></div></div>
-<div class="card"><div class="card-title"><b>프로그램 매매</b><span class="sub">최근 10일 · 순매수 기준</span></div><div class="table-scroll"><table><thead><tr><th>일자</th><th>차익</th><th>비차익</th><th>합계</th></tr></thead><tbody id="kospi-program"><tr><td colspan="4" class="empty">데이터 요청 중</td></tr></tbody></table></div><div class="more-box" id="kospi-program-more"></div></div>
+<div class="card"><div class="card-title"><b>일별 투자자 수급</b><span class="sub">최근 10일 · 단위: 억원</span></div><div class="table-scroll"><table class="ctr"><thead><tr><th rowspan="2">일자</th><th rowspan="2">지수</th><th rowspan="2">등락</th><th rowspan="2">등락률</th><th rowspan="2">개인</th><th rowspan="2">외국인</th><th rowspan="2">기관</th><th colspan="3">등락종목</th></tr><tr><th>상승</th><th>보합</th><th>하락</th></tr></thead><tbody id="kospi-flow-table"><tr><td colspan="10" class="empty">데이터 요청 중</td></tr></tbody></table></div><div class="more-box" id="kospi-flow-more"></div></div>
+<div class="card"><div class="card-title"><b>프로그램 매매</b><span class="sub">최근 10일 · 순매수 기준</span></div><div class="table-scroll"><table class="ctr"><thead><tr><th>일자</th><th>차익</th><th>비차익</th><th>합계</th></tr></thead><tbody id="kospi-program"><tr><td colspan="4" class="empty">데이터 요청 중</td></tr></tbody></table></div><div class="more-box" id="kospi-program-more"></div></div>
 </section>
 
 <section class="panel" id="panel-kosdaq">
@@ -79,8 +79,8 @@ main{padding:10px}.topline{display:flex;align-items:center;justify-content:space
 <div class="legend"><span><i style="background:#e34b55"></i>개인</span><span><i style="background:#3478d4"></i>외국인</span><span><i style="background:#159b76"></i>기관</span></div>
 <div class="note" id="kosdaq-flow-note">시장 집계 수급 데이터를 확인하고 있습니다.</div>
 </div>
-<div class="card"><div class="card-title"><b>일별 투자자 수급</b><span class="sub">최근 10일 · 금액은 원본 단위</span></div><div class="table-scroll"><table><thead><tr><th rowspan="2">일자</th><th rowspan="2">지수</th><th rowspan="2">등락</th><th rowspan="2">등락률</th><th rowspan="2">개인</th><th rowspan="2">외국인</th><th rowspan="2">기관</th><th colspan="3" style="text-align:center">등락종목</th></tr><tr><th>상승</th><th>보합</th><th>하락</th></tr></thead><tbody id="kosdaq-flow-table"><tr><td colspan="10" class="empty">데이터 요청 중</td></tr></tbody></table></div><div class="more-box" id="kosdaq-flow-more"></div></div>
-<div class="card"><div class="card-title"><b>프로그램 매매</b><span class="sub">최근 10일 · 순매수 기준</span></div><div class="table-scroll"><table><thead><tr><th>일자</th><th>차익</th><th>비차익</th><th>합계</th></tr></thead><tbody id="kosdaq-program"><tr><td colspan="4" class="empty">데이터 요청 중</td></tr></tbody></table></div><div class="more-box" id="kosdaq-program-more"></div></div>
+<div class="card"><div class="card-title"><b>일별 투자자 수급</b><span class="sub">최근 10일 · 단위: 억원</span></div><div class="table-scroll"><table class="ctr"><thead><tr><th rowspan="2">일자</th><th rowspan="2">지수</th><th rowspan="2">등락</th><th rowspan="2">등락률</th><th rowspan="2">개인</th><th rowspan="2">외국인</th><th rowspan="2">기관</th><th colspan="3">등락종목</th></tr><tr><th>상승</th><th>보합</th><th>하락</th></tr></thead><tbody id="kosdaq-flow-table"><tr><td colspan="10" class="empty">데이터 요청 중</td></tr></tbody></table></div><div class="more-box" id="kosdaq-flow-more"></div></div>
+<div class="card"><div class="card-title"><b>프로그램 매매</b><span class="sub">최근 10일 · 순매수 기준</span></div><div class="table-scroll"><table class="ctr"><thead><tr><th>일자</th><th>차익</th><th>비차익</th><th>합계</th></tr></thead><tbody id="kosdaq-program"><tr><td colspan="4" class="empty">데이터 요청 중</td></tr></tbody></table></div><div class="more-box" id="kosdaq-program-more"></div></div>
 </section>
 
 <section class="panel" id="panel-futures">
@@ -121,7 +121,13 @@ function investorFromNet(o){
  const out={individual:null,foreign:null,institution:null};
  const cls=x=>{const t=String(x).toLowerCase();if(/individual|personal|retail|개인/.test(t))return 'individual';if(/foreign|외국/.test(t))return 'foreign';if(/institution|organ|기관/.test(t))return 'institution';return null};
  const numIn=v=>{if(v&&typeof v==='object'){for(const [k,x] of Object.entries(v)){if(/net|amount|value|pure|buy/i.test(k)&&!/code|type|name/i.test(k)){const n=num(x);if(n!==null)return n}}return null}return num(v)};
- if(Array.isArray(na)){
+ if(Array.isArray(na)&&na.some(x=>x&&typeof x==='object'&&'investorGubun' in x)){
+  const g={};for(const it of na){if(it&&typeof it==='object'&&'investorGubun' in it){const v=num(it.diffValue!==undefined?it.diffValue:(num(it.buyPrice)!==null&&num(it.sellPrice)!==null?num(it.buyPrice)-num(it.sellPrice):null));if(v!==null)g[String(it.investorGubun)]=v}}
+  const E=v=>v/1e8,has=k=>g[k]!==undefined;
+  if(has('8000'))out.individual=E(g['8000']);
+  if(has('9000')||has('9001'))out.foreign=E((g['9000']||0)+(g['9001']||0));
+  if(has('7050'))out.institution=E(g['7050']);else{const ks=['1000','2000','3000','3100','4000','5000','6000'].filter(has);if(ks.length)out.institution=E(ks.reduce((a,k)=>a+g[k],0))}
+ }else if(Array.isArray(na)){
   if(na.length&&na.every(x=>x===null||typeof x!=='object')){const ks=['individual','foreign','institution'];ks.forEach((k,i)=>{out[k]=num(na[i])})}
   else for(const it of na){if(!it||typeof it!=='object')continue;let t=null;for(const v of Object.values(it)){if(typeof v==='string'&&cls(v)){t=cls(v);break}}if(t)out[t]=numIn(it)}
  }else if(typeof na==='object'){for(const [k,v] of Object.entries(na)){const t=cls(k);if(t)out[t]=numIn(v)}}
@@ -207,7 +213,7 @@ function timeOf(o){if(!o||typeof o!=='object')return '';for(const k of ['localTr
 function intradayRows(payload){
  const out=[];
  for(const arr of findRows(payload).sort((a,b)=>b.length-a.length)){
-  for(const o of arr){if(!o||typeof o!=='object')continue;const time=timeOf(o);if(!time)continue;const row={date:dateOf(o)||'0',time,individual:getField(o,keys.individual),foreign:getField(o,keys.foreign),institution:getField(o,keys.institution)};if(row.individual!==null||row.foreign!==null||row.institution!==null)out.push(row)}
+  for(const o of arr){if(!o||typeof o!=='object')continue;const time=timeOf(o);if(!time)continue;const row={date:dateOf(o)||'0',time,individual:flowVal(o,'individual'),foreign:flowVal(o,'foreign'),institution:flowVal(o,'institution')};if(row.individual!==null||row.foreign!==null||row.institution!==null)out.push(row)}
   if(out.length)break;
  }
  if(!out.length)return [];
@@ -226,10 +232,11 @@ function normalizeProgram(payload){
   const rows=[];
   for(const o of arr){
    if(!o||typeof o!=='object')continue;const date=dateOf(o);if(!date)continue;const f=flatten(o);
-   const arb=pickBy(f,[/^diffPureBuyAmt$/i,/^(?!.*non).*arbitrage.*(net|pure)/i,/^(?!.*non).*arbitrage/i]);
-   const non=pickBy(f,[/^biDiffPureBuyAmt$/i,/non.?arbitrage.*(net|pure)/i,/non.?arbitrage/i]);
+   let arb=pickBy(f,[/^diffPureBuyAmt$/i,/^(?!.*non).*arbitrage.*(net|pure)/i,/^(?!.*non).*arbitrage/i]);
+   let non=pickBy(f,[/^biDiffPureBuyAmt$/i,/non.?arbitrage.*(net|pure)/i,/non.?arbitrage/i]);
    let tot=pickBy(f,[/^totalDiffPureBuyAmt$/i,/(total|sum|whole|all).*(net|pure)/i,/(net|pure).*(total|sum|whole|all)/i,/total|sum/i]);
    if(tot===null&&arb!==null&&non!==null)tot=arb+non;
+   if('totalDiffPureBuyAmt' in f||'diffPureBuyAmt' in f){const E=v=>v===null?null:v/1e8;arb=E(arb);non=E(non);tot=E(tot)}
    if(arb!==null||non!==null||tot!==null)rows.push({date,arb,non,tot,raw:o});
   }
   if(rows.length){const m=new Map();for(const r of rows){const t=timeOf(r.raw);const old=m.get(r.date);if(!old||t>=old.t)m.set(r.date,{t,r})}return [...m.values()].map(x=>x.r).sort((a,b)=>b.date.localeCompare(a.date))}
