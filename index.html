@@ -219,9 +219,9 @@ function normalizeChartPayload(payload){
  const rows=normalizeIndex(payload);
  return rows.filter(r=>r.date&&r.close!==null);
 }
-const IDX_TABS={day:[5,10,20,40,60,100,120,200,240],week:[5,10,20,40,60,100,120,200,240],month:[5,10,12,20,40,60,100,120,200,240],year:[5,10,20,40,60,100,120,200,240]};
+const IDX_TABS={day:[5,10,20,40,60,100,120,200,240],week:[4,8,16,24,32,64,128,256,512],month:[6,12,18,24,30,36,42,48,54],year:[10,15,20,25,30,35,40,45,50]};
 const IDX_UNIT={day:'일',week:'주',month:'월',year:'년'};
-const IDX_DEF={day:120,week:20,month:12,year:10};
+const IDX_DEF={day:120,week:24,month:12,year:10};
 S.idxN={...IDX_DEF};
 const MA_COLORS={5:'#e34b55',10:'#e6a23c',20:'#159b76',40:'#3478d4',60:'#8b65c5',120:'#687487'};
 function periodBars(rows,period){
