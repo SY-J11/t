@@ -322,6 +322,7 @@ function renderDiag(){
   { const pn=panelInfo(d);L.push(`  전일/시가/고가/저가/거래량/대금 패널: 거래량 ${pn.volRaw??'없음'} / 대금 ${pn.amtRaw??'없음'}`) }
   { const bd=breadthOf(d);L.push(`  등락종목: 상승 ${bd.up??'-'} / 보합 ${bd.flat??'-'} / 하락 ${bd.down??'-'}`+(d.breadth?.error?' ('+d.breadth.error+')':'')+(d.breadth?.url?' src='+d.breadth.url.replace(/^https:\/\/[^/]+/,''):''));
     const it=findRows(d.investorTime?.data).sort((a,b)=>b.length-a.length)[0];L.push(`  투자자 시간별: ${it?it.length+'행, 첫 행 '+JSON.stringify(it[0]).slice(0,260):'없음'+(d.investorTime?.error?' ('+d.investorTime.error+')':'')}`+(d.investorTime?.url?' src='+d.investorTime.url.replace(/^https:\/\/[^/]+/,''):'')) }
+  { const pg=d.dailyPaging;L.push('  일별 페이징: '+(pg?`전략 ${pg.strategy??'없음'}, 수신 페이지 ${pg.pages}, 날짜 ${pg.totalDates??'-'}개, 시도 [${(pg.tried||[]).join(', ')}]`:'워커가 구버전입니다(dailyPaging 없음) → 워커 재배포 필요')) }
   const s1=findRows(d.daily?.data)[0]?.[0],s2=findRows(d.programDaily?.data)[0]?.[0];
   if(s1)L.push('  daily 응답 필드: '+Object.keys(flatten(s1)).slice(0,24).join(', '));
   if(s2)L.push('  program 응답 필드: '+Object.keys(flatten(s2)).slice(0,24).join(', '));
@@ -397,7 +398,7 @@ function renderCum(m){
  document.querySelectorAll('[data-cum]').forEach(b=>b.classList.toggle('on',Number(b.dataset.cum)===n));
 }
 function bestOf(cands){let best=[];for(const c of cands){let r=[];try{r=c()||[]}catch(e){}if(r.length>best.length)best=r}return best}
-function dailySources(m){const raw=S.markets[m]||{};return [()=>raw.flowRows,()=>dedupeByDate([...normalizeFlow(raw.daily?.data),...normalizeFlow(raw.daily2?.data),...normalizeFlow(raw.daily3?.data)]),()=>dedupeByDate(normalizeFlow(raw.daily?.data)),()=>dedupeByDate(normalizeFlow(raw.aggregateDaily?.data)),()=>htmlDaily(S.flow[m])]}
+function dailySources(m){const raw=S.markets[m]||{};return [()=>raw.flowRows,()=>dedupeByDate([...normalizeFlow(raw.daily?.data),...(raw.dailyMore||[]).flatMap(x=>normalizeFlow(x))]),()=>dedupeByDate(normalizeFlow(raw.daily?.data)),()=>dedupeByDate(normalizeFlow(raw.aggregateDaily?.data)),()=>htmlDaily(S.flow[m])]}
 function marketRows(m){const r=bestOf(dailySources(m));if(r.length)return r;const raw=S.markets[m]||{};return dedupeByDate(normalizeFlow(raw.aggregate?.data))}
 function programRows(m){const raw=S.markets[m]||{};return bestOf([()=>normalizeProgram(raw.programDaily?.data),()=>htmlProgram(S.flow[m]),()=>normalizeProgram(raw.program?.data)])}
 function renderMarket(m){const k=m.toLowerCase(),d=S.markets[m]||{},quote=normalizeIndex(d.index?.data||d.index),last=quote.at(-1);if(last){$(k+'-value').textContent=fmt(last.close,2);const delta=last.change,rate=last.rate;$(k+'-change').textContent=delta===null?'—':`${delta>0?'+':''}${fmt(delta,2)} (${rate===null?'—':rate.toFixed(2)+'%'})`;$(k+'-change').className='index-change '+(delta>0?'red':delta<0?'blue':'muted');}else{$(k+'-value').textContent='—';$(k+'-change').textContent='—';}
