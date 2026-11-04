@@ -81,6 +81,10 @@ table.fit th:nth-child(1){width:15%}table.fit th:nth-child(2){width:15%}table.fi
 <div class="chart"><canvas id="kospi-prog-chart"></canvas></div>
 <div class="legend"><span><i style="background:#e08a1e"></i>차익</span><span><i style="background:#3478d4"></i>비차익</span><span><i style="background:#159b76"></i>합계</span></div>
 <div class="note" id="kospi-prog-note"></div>
+<div class="sub-h">일별 누적 프로그램 매매<small id="kospi-pcum-range"></small></div><div class="cum-tabs"><button data-pcum="20">20일</button><button data-pcum="40">40일</button><button data-pcum="60">60일</button><button data-pcum="120">120일</button><button data-pcum="200">200일</button><button data-pcum="240" class="on">240일</button></div>
+<div class="chart"><canvas id="kospi-pcum-chart"></canvas></div>
+<div class="legend"><span><i style="background:#e08a1e"></i>차익</span><span><i style="background:#3478d4"></i>비차익</span><span><i style="background:#159b76"></i>합계</span></div>
+<div class="note" id="kospi-pcum-note"></div>
 <div class="sub-h">일별 프로그램 매매 (최근 10일)</div><div class="table-scroll"><table class="ctr"><thead><tr><th>일자</th><th>차익</th><th>비차익</th><th>합계</th></tr></thead><tbody id="kospi-program"><tr><td colspan="4" class="empty">데이터 요청 중</td></tr></tbody></table></div><div class="more-box" id="kospi-program-more"></div></div>
 </section>
 
@@ -108,6 +112,10 @@ table.fit th:nth-child(1){width:15%}table.fit th:nth-child(2){width:15%}table.fi
 <div class="chart"><canvas id="kosdaq-prog-chart"></canvas></div>
 <div class="legend"><span><i style="background:#e08a1e"></i>차익</span><span><i style="background:#3478d4"></i>비차익</span><span><i style="background:#159b76"></i>합계</span></div>
 <div class="note" id="kosdaq-prog-note"></div>
+<div class="sub-h">일별 누적 프로그램 매매<small id="kosdaq-pcum-range"></small></div><div class="cum-tabs"><button data-pcum="20">20일</button><button data-pcum="40">40일</button><button data-pcum="60">60일</button><button data-pcum="120">120일</button><button data-pcum="200">200일</button><button data-pcum="240" class="on">240일</button></div>
+<div class="chart"><canvas id="kosdaq-pcum-chart"></canvas></div>
+<div class="legend"><span><i style="background:#e08a1e"></i>차익</span><span><i style="background:#3478d4"></i>비차익</span><span><i style="background:#159b76"></i>합계</span></div>
+<div class="note" id="kosdaq-pcum-note"></div>
 <div class="sub-h">일별 프로그램 매매 (최근 10일)</div><div class="table-scroll"><table class="ctr"><thead><tr><th>일자</th><th>차익</th><th>비차익</th><th>합계</th></tr></thead><tbody id="kosdaq-program"><tr><td colspan="4" class="empty">데이터 요청 중</td></tr></tbody></table></div><div class="more-box" id="kosdaq-program-more"></div></div>
 </section>
 
@@ -322,6 +330,7 @@ function renderDiag(){
   { const pn=panelInfo(d);L.push(`  전일/시가/고가/저가/거래량/대금 패널: 거래량 ${pn.volRaw??'없음'} / 대금 ${pn.amtRaw??'없음'}`) }
   { const bd=breadthOf(d);L.push(`  등락종목: 상승 ${bd.up??'-'} / 보합 ${bd.flat??'-'} / 하락 ${bd.down??'-'}`+(d.breadth?.error?' ('+d.breadth.error+')':'')+(d.breadth?.url?' src='+d.breadth.url.replace(/^https:\/\/[^/]+/,''):''));
     const it=findRows(d.investorTime?.data).sort((a,b)=>b.length-a.length)[0];L.push(`  투자자 시간별: ${it?it.length+'행, 첫 행 '+JSON.stringify(it[0]).slice(0,260):'없음'+(d.investorTime?.error?' ('+d.investorTime.error+')':'')}`+(d.investorTime?.url?' src='+d.investorTime.url.replace(/^https:\/\/[^/]+/,''):'')) }
+  { const pp=d.programPaging;L.push('  프로그램 페이징: '+(pp?`전략 ${pp.strategy??'없음'}, 수신 페이지 ${pp.pages}, 날짜 ${pp.totalDates??'-'}개, 시도 [${(pp.tried||[]).join(', ')}]`:'워커가 구버전입니다(programPaging 없음) → 워커 재배포 필요')) }
   { const pg=d.dailyPaging;L.push('  일별 페이징: '+(pg?`전략 ${pg.strategy??'없음'}, 수신 페이지 ${pg.pages}, 날짜 ${pg.totalDates??'-'}개, 시도 [${(pg.tried||[]).join(', ')}]`:'워커가 구버전입니다(dailyPaging 없음) → 워커 재배포 필요')) }
   const s1=findRows(d.daily?.data)[0]?.[0],s2=findRows(d.programDaily?.data)[0]?.[0];
   if(s1)L.push('  daily 응답 필드: '+Object.keys(flatten(s1)).slice(0,24).join(', '));
@@ -376,10 +385,10 @@ function panelInfo(d){
 
 const fmtCum=v=>Math.abs(v)>=10000?(v/10000).toFixed(1)+'조':Math.round(v).toLocaleString('ko-KR');
 function cumulativeRows(all,n=120){const win=all.slice(0,n).reverse();const cum={individual:0,foreign:0,institution:0};return win.map(r=>{for(const t of ['individual','foreign','institution'])cum[t]+=(Number.isFinite(r[t])?r[t]:0);return {date:r.date,cum:{...cum}}})}
-function drawCum(id,rows){
+function drawCum(id,rows,types=['individual','foreign','institution'],colors=COLORS){
  const c=$(id);if(!c)return;const w=Math.max(c.clientWidth,280),h=Math.max(c.clientHeight,190),d=devicePixelRatio||1;c.width=w*d;c.height=h*d;const ctx=c.getContext('2d');ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,w,h);
  if(rows.length<2){ctx.fillStyle='#929dad';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText('누적 계산에 필요한 일별 데이터가 부족합니다',w/2,h/2);return}
- const types=['individual','foreign','institution'];const vals=rows.flatMap(r=>types.map(t=>r.cum[t]));
+ const vals=rows.flatMap(r=>types.map(t=>r.cum[t]));
  let lo=Math.min(0,...vals),hi=Math.max(0,...vals);if(lo===hi){lo-=1;hi+=1}const pv=(hi-lo)*.06;lo-=pv;hi+=pv;
  const p={l:50,r:10,t:10,b:20},cw=w-p.l-p.r,ch=h-p.t-p.b,X=i=>p.l+cw*i/(rows.length-1),Y=v=>p.t+ch*(hi-v)/(hi-lo);
  ctx.font='9px sans-serif';ctx.lineWidth=1;
@@ -389,7 +398,16 @@ function drawCum(id,rows){
  bounds.forEach((i,n)=>{const x=X(i);ctx.strokeStyle='#e6eaf0';ctx.beginPath();ctx.moveTo(x,p.t);ctx.lineTo(x,p.t+ch);ctx.stroke();
   const next=n+1<bounds.length?X(bounds[n+1]):w;if(n===0&&next-x<20)return;ctx.fillStyle='#929dad';ctx.textAlign='left';ctx.fillText(mo(rows[i])+'.',x+2,h-5)});
  const zy=Y(0);ctx.strokeStyle='#bbc4d0';ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(p.l,zy);ctx.lineTo(w-p.r,zy);ctx.stroke();ctx.setLineDash([]);
- for(const t of types){ctx.strokeStyle=COLORS[t];ctx.lineWidth=2;ctx.lineJoin='round';ctx.beginPath();rows.forEach((r,i)=>{const x=X(i),y=Y(r.cum[t]);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()}
+ for(const t of types){ctx.strokeStyle=colors[t];ctx.lineWidth=2;ctx.lineJoin='round';ctx.beginPath();rows.forEach((r,i)=>{const x=X(i),y=Y(r.cum[t]);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()}
+}
+const PCOLORS={arb:'#e08a1e',non:'#3478d4',tot:'#159b76'};
+function cumulativeProg(all,n){const win=all.slice(0,n).reverse();const cum={arb:0,non:0,tot:0};return win.map(r=>{for(const t of ['arb','non','tot'])cum[t]+=(Number.isFinite(r[t])?r[t]:0);return {date:r.date,cum:{...cum}}})}
+function renderPCum(m){
+ const k=m.toLowerCase(),n=S.pcumDays||240,cr=cumulativeProg(programRows(m),n);drawCum(k+'-pcum-chart',cr,['arb','non','tot'],PCOLORS);const last=cr.at(-1);
+ const rg=$(k+'-pcum-range');if(rg)rg.textContent=cr.length?`${fmtDate(cr[0].date)}~${fmtDate(last.date)} · ${cr.length}거래일`:'';
+ const sp=(nm,v)=>`<span class="${v>0?'red':v<0?'blue':'blk'}">${nm} ${v>0?'+':''}${fmt(v)}</span>`;
+ const nt=$(k+'-pcum-note');if(nt)nt.innerHTML=cr.length?`${n}일 누적 프로그램 순매수(억원): ${sp('차익',last.cum.arb)} · ${sp('비차익',last.cum.non)} · ${sp('합계',last.cum.tot)}`+(cr.length<n?` <span class="muted">(수신된 ${cr.length}거래일만 계산)</span>`:''):'일별 프로그램 매매 데이터가 없어 누적 그래프를 그리지 못했습니다.';
+ document.querySelectorAll('[data-pcum]').forEach(b=>b.classList.toggle('on',Number(b.dataset.pcum)===n));
 }
 function renderCum(m){
  const k=m.toLowerCase(),n=S.cumDays||240,daily=marketRows(m),cr=cumulativeRows(daily,n);drawCum(k+'-cum-chart',cr);const last=cr.at(-1);
@@ -401,7 +419,8 @@ function renderCum(m){
 function bestOf(cands){let best=[];for(const c of cands){let r=[];try{r=c()||[]}catch(e){}if(r.length>best.length)best=r}return best}
 function dailySources(m){const raw=S.markets[m]||{};return [()=>raw.flowRows,()=>dedupeByDate([...normalizeFlow(raw.daily?.data),...(raw.dailyMore||[]).flatMap(x=>normalizeFlow(x))]),()=>dedupeByDate(normalizeFlow(raw.daily?.data)),()=>dedupeByDate(normalizeFlow(raw.aggregateDaily?.data)),()=>htmlDaily(S.flow[m])]}
 function marketRows(m){const r=bestOf(dailySources(m));if(r.length)return r;const raw=S.markets[m]||{};return dedupeByDate(normalizeFlow(raw.aggregate?.data))}
-function programRows(m){const raw=S.markets[m]||{};return bestOf([()=>normalizeProgram(raw.programDaily?.data),()=>htmlProgram(S.flow[m]),()=>normalizeProgram(raw.program?.data)])}
+function programAll(raw){const mp=new Map();for(const r of [...normalizeProgram(raw.programDaily?.data),...(raw.programMore||[]).flatMap(x=>normalizeProgram(x))]){const tt=timeOf(r.raw),old=mp.get(r.date);if(!old||tt>=old.t)mp.set(r.date,{t:tt,r})}return [...mp.values()].map(x=>x.r).sort((a,b)=>b.date.localeCompare(a.date))}
+function programRows(m){const raw=S.markets[m]||{};return bestOf([()=>programAll(raw),()=>normalizeProgram(raw.programDaily?.data),()=>htmlProgram(S.flow[m]),()=>normalizeProgram(raw.program?.data)])}
 function renderMarket(m){const k=m.toLowerCase(),d=S.markets[m]||{},quote=normalizeIndex(d.index?.data||d.index),last=quote.at(-1);if(last){$(k+'-value').textContent=fmt(last.close,2);const delta=last.change,rate=last.rate;$(k+'-change').textContent=delta===null?'—':`${delta>0?'+':''}${fmt(delta,2)} (${rate===null?'—':rate.toFixed(2)+'%'})`;$(k+'-change').className='index-change '+(delta>0?'red':delta<0?'blue':'muted');}else{$(k+'-value').textContent='—';$(k+'-change').textContent='—';}
 const chartResponse=d.charts?.[S.period];const bars=normalizeChartPayload(chartResponse?.data||chartResponse).slice(-120);{drawCandleChart(k+'-chart',bars);const err=chartResponse?.error;$(k+'-index-note').textContent=bars.length?`${bars.length}개 ${({day:'일봉',week:'주봉',month:'월봉',year:'연봉'})[S.period]} · 이동평균 5·10·20·40·60·120 · 거래량`:(err?`네이버 차트 API 오류: ${err}`:'차트 응답은 받았지만 OHLC 데이터를 찾지 못했습니다.');}
 const fl=S.flow[m];let intra=intradayRows(d.investorTime);if(!intra.length)intra=intradayRows(d.aggregate);const daily=marketRows(m),cur=daily[0]||(intra.length?intra.at(-1):null);
@@ -421,7 +440,7 @@ renderCum(m);
 {const bm=dayBarMap(d);renderPaged(m+'-flow',k+'-flow-table',k+'-flow-more',daily,r=>dailyRowCells(r,bm),7)}
 const prog=programRows(m);
 {const pi=programIntradayRows(d.program?.data);drawIntraday(k+'-prog-chart',pi,['arb','non','tot']);$(k+'-prog-date').textContent=pi.length?`${fmtDate(pi[0].date)} ${pi[0].time.slice(0,2)}:${pi[0].time.slice(2)}~${pi.at(-1).time.slice(0,2)}:${pi.at(-1).time.slice(2)}`:'';$(k+'-prog-note').textContent=pi.length?`당일 ${pi.length}개 시점 · 원본 응답 값 그대로(억원 환산)`:'당일 시간별 프로그램 데이터를 받지 못했습니다.'}
-renderPaged(m+'-program',k+'-program',k+'-program-more',prog,r=>[fmtDate(r.date),r.arb,r.non,r.tot],4);
+renderPaged(m+'-program',k+'-program',k+'-program-more',prog,r=>[fmtDate(r.date),r.arb,r.non,r.tot],4);renderPCum(m);
 if(!prog.length&&(d.programDaily?.error||d.program?.error))$(k+'-program').innerHTML=`<tr><td colspan="4" class="empty">프로그램 매매 응답 오류: ${d.programDaily?.error||d.program?.error}</td></tr>`;
 }
 function renderFutures(){const d=S.markets.FUT||{},rows=marketRows('FUT'),latest=rows[0];for(const t of ['individual','foreign','institution'])$('fut-'+t).textContent=latest&&latest[t]!==null?fmt(latest[t]):'—';setTable('fut-flow-table',rows.slice(0,S.days).map(r=>[r.date,fmt(r.individual),fmt(r.foreign),fmt(r.institution)]),4);draw('fut-flow-chart',['individual','foreign','institution'].map(t=>({color:COLORS[t],values:rows.slice(0,S.days).reverse().map(r=>r[t]).filter(v=>v!==null)})),true);$('fut-flow-note').textContent=rows.length?`선물 시장 수급 ${rows.length}개 행 수신. 금액/계약 단위는 원본 필드 확인 후 표시합니다.`:'선물 수급 응답에 표시 가능한 날짜별 행이 없습니다.';
@@ -438,6 +457,7 @@ document.querySelectorAll('[data-cum]').forEach(b=>b.addEventListener('click',()
 document.querySelectorAll('[data-market]').forEach(b=>b.addEventListener('click',()=>{S.cumMarket=b.dataset.market;document.querySelectorAll('[data-market]').forEach(x=>x.classList.toggle('active',x===b));renderCumulative()}));
 document.addEventListener('click',e=>{const b=e.target.closest('[data-more],[data-less]');if(!b)return;const more=b.dataset.more,less=b.dataset.less,key=more||less;S.page[key]=more?(S.page[key]||10)+10:10;renderMarket(key.split('-')[0])});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-cum]');if(!b)return;S.cumDays=Number(b.dataset.cum);renderCum('KOSPI');renderCum('KOSDAQ')});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-pcum]');if(!b)return;S.pcumDays=Number(b.dataset.pcum);renderPCum('KOSPI');renderPCum('KOSDAQ')});
 $('refresh').addEventListener('click',()=>load(true));window.addEventListener('resize',()=>{if(S.markets.KOSPI)renderMarket('KOSPI');if(S.markets.KOSDAQ)renderMarket('KOSDAQ');renderFutures();if(S.tab==='compare')renderCompare();if(S.tab==='cumulative')renderCumulative()});
 load();
 </script>
