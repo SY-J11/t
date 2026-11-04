@@ -305,6 +305,7 @@ function renderDiag(){
     const pa=findRows(d.programDaily?.data).sort((a,b)=>b.length-a.length)[0];if(pa)L.push('  program 첫 행 원본: '+JSON.stringify(pa[0]).slice(0,400)) }
   { const pr=latestPriceRow(d.price?.data);L.push('  price 목록 최신 행: '+(pr?JSON.stringify(pr).slice(0,500):'없음'+(d.price?.error?' ('+d.price.error+')':'')));
     const pt=findRows(d.program?.data).sort((a,b)=>b.length-a.length)[0];L.push('  program(시간별) 행수 '+(pt?pt.length:0)+(pt?', 첫 행: '+JSON.stringify(pt[0]).slice(0,300):'')) }
+  { const pn=panelInfo(d);L.push(`  전일/시가/고가/저가/거래량/대금 패널: 거래량 ${pn.volRaw??'없음'} / 대금 ${pn.amtRaw??'없음'}`) }
   { const bd=breadthOf(d);L.push(`  등락종목: 상승 ${bd.up??'-'} / 보합 ${bd.flat??'-'} / 하락 ${bd.down??'-'}`+(d.breadth?.error?' ('+d.breadth.error+')':'')+(d.breadth?.url?' src='+d.breadth.url.replace(/^https:\/\/[^/]+/,''):''));
     const it=findRows(d.investorTime?.data).sort((a,b)=>b.length-a.length)[0];L.push(`  투자자 시간별: ${it?it.length+'행, 첫 행 '+JSON.stringify(it[0]).slice(0,260):'없음'+(d.investorTime?.error?' ('+d.investorTime.error+')':'')}`+(d.investorTime?.url?' src='+d.investorTime.url.replace(/^https:\/\/[^/]+/,''):'')) }
   const s1=findRows(d.daily?.data)[0]?.[0],s2=findRows(d.programDaily?.data)[0]?.[0];
@@ -340,6 +341,17 @@ function setCount(id,v,kind){const el=$(id);if(!el)return;el.classList.remove('r
 function deepFind(o,re,depth=0){if(!o||typeof o!=='object'||depth>7)return null;if(!Array.isArray(o))for(const [k,v] of Object.entries(o)){if(re.test(k)&&v!==null&&typeof v!=='object'){const n=num(v);if(n!==null)return n}}for(const v of (Array.isArray(o)?o.slice(0,5):Object.values(o))){const r=deepFind(v,re,depth+1);if(r!==null)return r}return null}
 function breadthOf(d){const src=[d.breadth?.data,d.index?.data];const P={up:/^(rise|up|advance|advancing|rising)(count|cnt|stocks?|issues?|num)?$/i,flat:/^(steady|flat|unchanged|same|nochange)(count|cnt|stocks?|issues?|num)?$/i,down:/^(fall|down|decline|declining|falling)(count|cnt|stocks?|issues?|num)?$/i};const out={up:null,flat:null,down:null};for(const t of ['up','flat','down'])for(const x of src){if(out[t]!==null)break;out[t]=deepFind(x,P[t])}return out}
 function guessAmount(f){let best=null;for(const [k,v] of Object.entries(f)){if(/price|open|high|low|close|ratio|rate|compare|date|time|code|volume|quant|count|change|index|ma\d/i.test(k))continue;const n=num(v);if(n!==null&&(best===null||n>best))best=n}return best}
+
+function krNum(valStr,unit){const t=(String(valStr??'')+' '+String(unit??'')).replace(/,/g,'');const M={'조':1e12,'억':1e8,'백만':1e6,'만':1e4,'천':1e3};let sum=0,hit=false;for(const m of t.matchAll(/([\d.]+)\s*(조|억|백만|만|천)?/g)){const n=parseFloat(m[1]);if(!Number.isFinite(n))continue;sum+=n*(m[2]?M[m[2]]:1);hit=true}return hit?sum:null}
+function collectKV(o,out,depth=0){if(!o||typeof o!=='object'||depth>8)return;if(!Array.isArray(o))out.push(o);for(const v of (Array.isArray(o)?o:Object.values(o)))collectKV(v,out,depth+1)}
+function panelInfo(d){
+ const objs=[];for(const src of [d.breadth?.data,d.index?.data,d.price?.data])collectKV(src,objs);
+ const labs=o=>[o.key,o.name,o.title,o.label,o.itemName,o.code].filter(x=>typeof x==='string');
+ const out={vol:null,amt:null,volRaw:null,amtRaw:null};
+ for(const o of objs){const L=labs(o);if(!L.length)continue;const val=o.value??o.text??o.displayValue??o.val;if(val===undefined||val===null||typeof val==='object')continue;const unit=o.valueDesc??o.unit??o.desc??o.unitText??'';
+  if(out.vol===null&&L.some(x=>/^(거래량|accumulatedTradingVolume)$/i.test(x))){out.vol=krNum(val,unit);out.volRaw=`${val} ${unit}`.trim()}
+  if(out.amt===null&&L.some(x=>/^(대금|거래대금|accumulatedTradingValue)$/i.test(x))){out.amt=krNum(val,unit);out.amtRaw=`${val} ${unit}`.trim()}}
+ return out}
 function bestOf(cands){let best=[];for(const c of cands){let r=[];try{r=c()||[]}catch(e){}if(r.length>best.length)best=r}return best}
 function dailySources(m){const raw=S.markets[m]||{};return [()=>raw.flowRows,()=>dedupeByDate(normalizeFlow(raw.daily?.data)),()=>dedupeByDate(normalizeFlow(raw.aggregateDaily?.data)),()=>htmlDaily(S.flow[m])]}
 function marketRows(m){const r=bestOf(dailySources(m));if(r.length)return r;const raw=S.markets[m]||{};return dedupeByDate(normalizeFlow(raw.aggregate?.data))}
@@ -353,6 +365,7 @@ for(const t of ['individual','foreign','institution'])setSigned(k+'-'+t,cur?cur[
 let vol=last?last.volume:null,amt=last?last.amount:null;{const dc=normalizeChartPayload(d.charts?.day?.data||d.charts?.day),dl=dc.length?dc[dc.length-1]:null;if((vol===null||vol===undefined)&&dl)vol=dl.volume;if((amt===null||amt===undefined)&&dl)amt=dl.amount}
 {const pr=latestPriceRow(d.price?.data)||latestPriceRow(d.charts?.day?.data);if(pr){const f=flatten(pr);const a=pickBy(f,[/accumulatedTradingValue/i,/(trading|trade|accumulated).*(value|amount)/i,/(value|amount).*(trading|trade)/i,/pbmn|amount/i]);const v=pickBy(f,[/accumulatedTradingVolume/i,/(trading|trade|accumulated).*volume/i,/volume/i]);const a2=a!==null?a:guessAmount(f);if(a2!==null)amt=a2;if((vol===null||vol===undefined)&&v!==null)vol=v}}
 if(amt===null||amt===undefined){const f=flatten(d.index?.data&&typeof d.index.data==='object'?d.index.data:{});amt=pickBy(f,[/(trading|trade|accumulated).*(value|amount)/i,/(value|amount).*(trading|trade)/i,/pbmn|amount/i])}
+{const pn=panelInfo(d);if(pn.vol!==null)vol=pn.vol;if(pn.amt!==null)amt=pn.amt}
 $(k+'-volume').textContent=fmtVol(vol);$(k+'-amount').textContent=fmtAmt(amt);
 drawIntraday(k+'-flow-chart',intra);
 $(k+'-intra-date').textContent=intra.length?`${fmtDate(intra[0].date)} ${intra[0].time.slice(0,2)}:${intra[0].time.slice(2)}~${intra.at(-1).time.slice(0,2)}:${intra.at(-1).time.slice(2)}`:'';
