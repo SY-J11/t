@@ -39,6 +39,7 @@ table.fit th:nth-child(1){width:15%}table.fit th:nth-child(2){width:15%}table.fi
 @media(max-width:380px){table.fit th,table.fit td{font-size:9.5px;letter-spacing:-.4px}}.summary+.summary{margin-top:7px}.loading{opacity:.55;pointer-events:none}
 @media(min-width:700px){.app{padding-left:8px;padding-right:8px}.chart{height:230px}.chart.tall{height:250px}.two{grid-template-columns:1fr 1fr}}
 @media(max-width:380px){main{padding:8px}.summary{gap:5px}.sum{padding:8px 6px}.sum b{font-size:12px}.index-value{font-size:24px}.nav button{padding:8px 11px}}
+.cmp-days{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cmp-card{border:1px solid var(--line);border-radius:10px;padding:8px 6px 4px;min-width:0;background:#fff}.cmp-card h4{margin:0 0 4px 3px;font-size:11px;font-weight:800;color:var(--text)}.cmp-card table{font-size:10px;table-layout:auto}.cmp-card th,.cmp-card td{padding:5px 3px}.cmp-card th:first-child,.cmp-card td:first-child{text-align:left;color:#58667b}.cmp-card td{font-weight:700}
 </style>
 </head>
 <body>
@@ -146,6 +147,8 @@ table.fit th:nth-child(1){width:15%}table.fit th:nth-child(2){width:15%}table.fi
 <section class="panel" id="panel-compare">
 <div class="card"><div class="card-title"><b>시장별 투자자 수급 비교</b><span class="sub">최근 거래일</span></div><div class="table-scroll"><table><thead><tr><th>시장</th><th>개인</th><th>외국인</th><th>기관</th></tr></thead><tbody id="compare-table"><tr><td colspan="4" class="empty">데이터 요청 중</td></tr></tbody></table></div></div>
 <div class="card"><div class="card-title"><b>외국인 순매수 비교</b><span class="sub">KOSPI · KOSDAQ · FUT</span></div><div class="chart tall"><canvas id="compare-chart"></canvas></div><div class="legend"><span><i style="background:#3478d4"></i>코스피</span><span><i style="background:#159b76"></i>코스닥</span><span><i style="background:#e3a33e"></i>선물</span></div></div>
+<div class="card"><div class="card-title"><b>기관 순매수 비교</b><span class="sub">KOSPI · KOSDAQ · FUT</span></div><div class="chart tall"><canvas id="compare-chart-inst"></canvas></div><div class="legend"><span><i style="background:#3478d4"></i>코스피</span><span><i style="background:#159b76"></i>코스닥</span><span><i style="background:#e3a33e"></i>선물</span></div></div>
+<div class="card"><div class="card-title"><b>일별 수급 내역</b><span class="sub" id="compare-days-sub"></span></div><div id="compare-days" class="cmp-days"></div><div class="more-box" id="compare-days-more"></div></div>
 </section>
 
 <section class="panel" id="panel-cumulative">
@@ -619,7 +622,24 @@ async function loadFut(force){
  catch(e){S.fut={f:{},rows:[],intra:[],idx:[],errors:[{source:'FUT',message:e.message}],error:e.message}}
  renderFutures();renderDiag();if(S.tab==='compare')renderCompare();if(S.tab==='cumulative')renderCumulative();
 }
-function renderCompare(){const markets=['KOSPI','KOSDAQ','FUT'];const rows=markets.map(m=>{const r=marketRows(m)[0];return[m==='KOSPI'?'코스피':m==='KOSDAQ'?'코스닥':'선물',r?.individual??null,r?.foreign??null,r?.institution??null]});setTable('compare-table',rows.map(r=>[r[0],r[1]===null?'—':fmt(r[1]),r[2]===null?'—':fmt(r[2]),r[3]===null?'—':fmt(r[3])]),4);const sets=markets.map((m,i)=>({color:['#3478d4','#159b76','#e3a33e'][i],values:marketRows(m).slice(0,S.days).reverse().map(r=>r.foreign).filter(v=>v!==null)}));draw('compare-chart',sets,true)}
+const cmpClass=v=>v===null||v===undefined?'muted':v>0?'red':v<0?'blue':'blk';
+const cmpCell=v=>`<td class="${cmpClass(v)}">${v===null||v===undefined?'—':fmt(v)}</td>`;
+function renderCompare(){
+ const markets=[['KOSPI','코스피'],['KOSDAQ','코스닥'],['FUT','선물']],data=markets.map(([m])=>marketRows(m));
+ // 1) 최근 거래일 표 (+는 빨강, -는 파랑, 0은 검정)
+ {const el=$('compare-table');if(el)el.innerHTML=markets.map(([m,name],i)=>{const r=data[i][0]||{};return `<tr><td>${name}</td>${cmpCell(r.individual??null)}${cmpCell(r.foreign??null)}${cmpCell(r.institution??null)}</tr>`}).join('')}
+ // 2) 외국인 / 기관 순매수 비교 그래프
+ const colors=['#3478d4','#159b76','#e3a33e'];
+ for(const [id,key] of [['compare-chart','foreign'],['compare-chart-inst','institution']])
+  draw(id,data.map((rows,i)=>({color:colors[i],values:rows.slice(0,S.days).reverse().map(r=>r[key]).filter(v=>v!==null&&v!==undefined)})),true);
+ // 3) 일별 수급 내역 카드 (한 줄에 2개, 기본 10개 / 펼치면 최대 400개)
+ const maps=data.map(rows=>new Map(rows.map(r=>[r.date,r]))),dates=[...new Set(data.flatMap(rows=>rows.map(r=>r.date)))].filter(d=>d&&d!=='0').sort().reverse().slice(0,400);
+ const open=!!S.cmpOpen,shown=open?dates:dates.slice(0,10),box=$('compare-days'),more=$('compare-days-more');
+ if(box){box.innerHTML=shown.length?shown.map(d=>`<div class="cmp-card"><h4>${fmtDate(d)}.</h4><table><thead><tr><th>시장</th><th>개인</th><th>외국인</th><th>기관</th></tr></thead><tbody>${markets.map(([m,name],i)=>{const r=maps[i].get(d)||{};return `<tr><td>${name}</td>${cmpCell(r.individual??null)}${cmpCell(r.foreign??null)}${cmpCell(r.institution??null)}</tr>`}).join('')}</tbody></table></div>`).join(''):'<div class="empty" style="grid-column:1/-1;padding:14px;text-align:center;color:#929dad;font-size:11px">일별 수급 데이터를 불러오는 중입니다</div>'}
+ const sub=$('compare-days-sub');if(sub)sub.textContent=dates.length?`${shown.length}/${dates.length}일`:'';
+ if(more)more.innerHTML=dates.length>10?(open?'<button data-cmp="close">▲ 접기</button>':`<button data-cmp="open">▼ 펼치기 (최대 ${dates.length}일)</button>`):'';
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-cmp]');if(!b)return;S.cmpOpen=b.dataset.cmp==='open';renderCompare()});
 function renderCumulative(){const rows=marketRows(S.cumMarket).slice(0,S.cum).reverse();if(!rows.length){draw('cum-chart',[],true);$('cum-note').textContent='선택한 시장의 일별 투자자 수급 데이터가 없어 누적값을 계산할 수 없습니다.';return}const series=['individual','foreign','institution'].map(t=>{let total=0;return{color:COLORS[t],values:rows.map((r,i)=>{if(i===0)return 0;if(r[t]!==null)total+=r[t];return total})}});draw('cum-chart',series,true);$('cum-note').textContent=`${rows.length}개 거래일 · 첫 거래일 0 기준으로 이후 순매수를 누적했습니다.`}
 function show(tab){S.tab=tab;document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+tab));$('periods').style.display=['kospi','kosdaq'].includes(tab)?'flex':'none';if(tab==='kospi'||tab==='kosdaq')renderMarket(tab.toUpperCase());if(tab==='futures')renderFutures();if(tab==='compare')renderCompare();if(tab==='cumulative')renderCumulative()}
 async function fetchPhase(phase,force){const r=await fetch(`${WORKER}?action=dashboard&phase=${phase}&days=2000`,force?{cache:'no-store'}:{});const data=await r.json();if(!r.ok||!data.ok)throw Error(data.error||`HTTP ${r.status}`);return data}
