@@ -30,7 +30,7 @@ main{padding:10px}.topline{display:flex;align-items:center;justify-content:space
 .vol-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}.vol-box{background:#f7f8fa;border-radius:9px;padding:10px 10px;min-width:0}.vol-box span{display:block;color:var(--muted);font-size:10px;margin-bottom:5px}.vol-box b{font-size:15px;letter-spacing:-.3px;white-space:nowrap}
 .sub-h{font-size:11px;font-weight:750;color:#4d5a6e;margin:12px 1px 4px}.sub-h small{font-weight:400;color:var(--muted);margin-left:5px}
 .more-box{display:flex;gap:6px;margin-top:8px}.more-box:empty{display:none}.more-box button{flex:1;border:1px solid var(--line);background:#f8f9fb;border-radius:9px;padding:9px 8px;font-size:11px;color:#58667b;font-weight:700}.more-box button:active{background:#eaf0f7}
-table.ctr th{text-align:center;vertical-align:middle}table.ctr thead tr:nth-child(2) th{border-top:1px solid var(--line)}.loading{opacity:.55;pointer-events:none}
+table.ctr th{text-align:center;vertical-align:middle}table.ctr thead tr:nth-child(2) th{border-top:1px solid var(--line)}.blk{color:#111!important}.summary+.summary{margin-top:7px}.loading{opacity:.55;pointer-events:none}
 @media(min-width:700px){.app{padding-left:8px;padding-right:8px}.chart{height:230px}.chart.tall{height:250px}.two{grid-template-columns:1fr 1fr}}
 @media(max-width:380px){main{padding:8px}.summary{gap:5px}.sum{padding:8px 6px}.sum b{font-size:12px}.index-value{font-size:24px}.nav button{padding:8px 11px}}
 </style>
@@ -59,6 +59,8 @@ table.ctr th{text-align:center;vertical-align:middle}table.ctr thead tr:nth-chil
 <div class="card-title"><b>투자자별 순매수</b><span class="sub">단위: 억원 · 원본 기준</span></div>
 <div class="vol-row"><div class="vol-box"><span>당일 거래량</span><b id="kospi-volume">—</b></div><div class="vol-box"><span>당일 거래대금</span><b id="kospi-amount">—</b></div></div>
 <div class="summary"><div class="sum"><span>개인</span><b id="kospi-individual">—</b></div><div class="sum"><span>외국인</span><b id="kospi-foreign">—</b></div><div class="sum"><span>기관</span><b id="kospi-institution">—</b></div></div>
+<div class="summary"><div class="sum"><span>프로그램 차익</span><b id="kospi-pg-arb">—</b></div><div class="sum"><span>프로그램 비차익</span><b id="kospi-pg-non">—</b></div><div class="sum"><span>프로그램 전체</span><b id="kospi-pg-tot">—</b></div></div>
+<div class="summary"><div class="sum"><span>상승 종목</span><b id="kospi-b-up">—</b></div><div class="sum"><span>보합 종목</span><b id="kospi-b-flat">—</b></div><div class="sum"><span>하락 종목</span><b id="kospi-b-down">—</b></div></div>
 <div class="sub-h">당일 시간별 투자자별 순매수<small id="kospi-intra-date"></small></div>
 <div class="chart"><canvas id="kospi-flow-chart"></canvas></div>
 <div class="legend"><span><i style="background:#e34b55"></i>개인</span><span><i style="background:#3478d4"></i>외국인</span><span><i style="background:#159b76"></i>기관</span></div>
@@ -79,6 +81,8 @@ table.ctr th{text-align:center;vertical-align:middle}table.ctr thead tr:nth-chil
 <div class="card-title"><b>투자자별 순매수</b><span class="sub">단위: 억원 · 원본 기준</span></div>
 <div class="vol-row"><div class="vol-box"><span>당일 거래량</span><b id="kosdaq-volume">—</b></div><div class="vol-box"><span>당일 거래대금</span><b id="kosdaq-amount">—</b></div></div>
 <div class="summary"><div class="sum"><span>개인</span><b id="kosdaq-individual">—</b></div><div class="sum"><span>외국인</span><b id="kosdaq-foreign">—</b></div><div class="sum"><span>기관</span><b id="kosdaq-institution">—</b></div></div>
+<div class="summary"><div class="sum"><span>프로그램 차익</span><b id="kosdaq-pg-arb">—</b></div><div class="sum"><span>프로그램 비차익</span><b id="kosdaq-pg-non">—</b></div><div class="sum"><span>프로그램 전체</span><b id="kosdaq-pg-tot">—</b></div></div>
+<div class="summary"><div class="sum"><span>상승 종목</span><b id="kosdaq-b-up">—</b></div><div class="sum"><span>보합 종목</span><b id="kosdaq-b-flat">—</b></div><div class="sum"><span>하락 종목</span><b id="kosdaq-b-down">—</b></div></div>
 <div class="sub-h">당일 시간별 투자자별 순매수<small id="kosdaq-intra-date"></small></div>
 <div class="chart"><canvas id="kosdaq-flow-chart"></canvas></div>
 <div class="legend"><span><i style="background:#e34b55"></i>개인</span><span><i style="background:#3478d4"></i>외국인</span><span><i style="background:#159b76"></i>기관</span></div>
@@ -301,6 +305,8 @@ function renderDiag(){
     const pa=findRows(d.programDaily?.data).sort((a,b)=>b.length-a.length)[0];if(pa)L.push('  program 첫 행 원본: '+JSON.stringify(pa[0]).slice(0,400)) }
   { const pr=latestPriceRow(d.price?.data);L.push('  price 목록 최신 행: '+(pr?JSON.stringify(pr).slice(0,500):'없음'+(d.price?.error?' ('+d.price.error+')':'')));
     const pt=findRows(d.program?.data).sort((a,b)=>b.length-a.length)[0];L.push('  program(시간별) 행수 '+(pt?pt.length:0)+(pt?', 첫 행: '+JSON.stringify(pt[0]).slice(0,300):'')) }
+  { const bd=breadthOf(d);L.push(`  등락종목: 상승 ${bd.up??'-'} / 보합 ${bd.flat??'-'} / 하락 ${bd.down??'-'}`+(d.breadth?.error?' ('+d.breadth.error+')':'')+(d.breadth?.url?' src='+d.breadth.url.replace(/^https:\/\/[^/]+/,''):''));
+    const it=findRows(d.investorTime?.data).sort((a,b)=>b.length-a.length)[0];L.push(`  투자자 시간별: ${it?it.length+'행, 첫 행 '+JSON.stringify(it[0]).slice(0,260):'없음'+(d.investorTime?.error?' ('+d.investorTime.error+')':'')}`+(d.investorTime?.url?' src='+d.investorTime.url.replace(/^https:\/\/[^/]+/,''):'')) }
   const s1=findRows(d.daily?.data)[0]?.[0],s2=findRows(d.programDaily?.data)[0]?.[0];
   if(s1)L.push('  daily 응답 필드: '+Object.keys(flatten(s1)).slice(0,24).join(', '));
   if(s2)L.push('  program 응답 필드: '+Object.keys(flatten(s2)).slice(0,24).join(', '));
@@ -328,16 +334,24 @@ function programIntradayRows(payload){
  return out.filter(r=>r.date===day).sort((a,b)=>a.time.localeCompare(b.time));
 }
 function latestPriceRow(payload){const arr=findRows(payload).sort((a,b)=>b.length-a.length)[0];if(!arr||!arr.length)return null;let best=null,bd='';for(const o of arr){if(!o||typeof o!=='object')continue;const dt=dateOf(o)||'';if(!best||dt>bd){best=o;bd=dt}}return best}
+
+function setSigned(id,v,fmtFn){const el=$(id);if(!el)return;el.classList.remove('red','blue','blk','muted');if(v===null||v===undefined){el.textContent='—';return}el.textContent=(fmtFn||fmt)(v);el.classList.add(v>0?'red':v<0?'blue':'blk')}
+function setCount(id,v,kind){const el=$(id);if(!el)return;el.classList.remove('red','blue','blk','muted');if(v===null||v===undefined){el.textContent='—';return}el.textContent=fmt(v);el.classList.add(kind==='up'?'red':kind==='down'?'blue':'blk')}
+function deepFind(o,re,depth=0){if(!o||typeof o!=='object'||depth>7)return null;if(!Array.isArray(o))for(const [k,v] of Object.entries(o)){if(re.test(k)&&v!==null&&typeof v!=='object'){const n=num(v);if(n!==null)return n}}for(const v of (Array.isArray(o)?o.slice(0,5):Object.values(o))){const r=deepFind(v,re,depth+1);if(r!==null)return r}return null}
+function breadthOf(d){const src=[d.breadth?.data,d.index?.data];const P={up:/^(rise|up|advance|advancing|rising)(count|cnt|stocks?|issues?|num)?$/i,flat:/^(steady|flat|unchanged|same|nochange)(count|cnt|stocks?|issues?|num)?$/i,down:/^(fall|down|decline|declining|falling)(count|cnt|stocks?|issues?|num)?$/i};const out={up:null,flat:null,down:null};for(const t of ['up','flat','down'])for(const x of src){if(out[t]!==null)break;out[t]=deepFind(x,P[t])}return out}
+function guessAmount(f){let best=null;for(const [k,v] of Object.entries(f)){if(/price|open|high|low|close|ratio|rate|compare|date|time|code|volume|quant|count|change|index|ma\d/i.test(k))continue;const n=num(v);if(n!==null&&(best===null||n>best))best=n}return best}
 function bestOf(cands){let best=[];for(const c of cands){let r=[];try{r=c()||[]}catch(e){}if(r.length>best.length)best=r}return best}
 function dailySources(m){const raw=S.markets[m]||{};return [()=>raw.flowRows,()=>dedupeByDate(normalizeFlow(raw.daily?.data)),()=>dedupeByDate(normalizeFlow(raw.aggregateDaily?.data)),()=>htmlDaily(S.flow[m])]}
 function marketRows(m){const r=bestOf(dailySources(m));if(r.length)return r;const raw=S.markets[m]||{};return dedupeByDate(normalizeFlow(raw.aggregate?.data))}
 function programRows(m){const raw=S.markets[m]||{};return bestOf([()=>normalizeProgram(raw.programDaily?.data),()=>htmlProgram(S.flow[m]),()=>normalizeProgram(raw.program?.data)])}
 function renderMarket(m){const k=m.toLowerCase(),d=S.markets[m]||{},quote=normalizeIndex(d.index?.data||d.index),last=quote.at(-1);if(last){$(k+'-value').textContent=fmt(last.close,2);const delta=last.change,rate=last.rate;$(k+'-change').textContent=delta===null?'—':`${delta>0?'+':''}${fmt(delta,2)} (${rate===null?'—':rate.toFixed(2)+'%'})`;$(k+'-change').className='index-change '+(delta>0?'red':delta<0?'blue':'muted');}else{$(k+'-value').textContent='—';$(k+'-change').textContent='—';}
 const chartResponse=d.charts?.[S.period];const bars=normalizeChartPayload(chartResponse?.data||chartResponse).slice(-120);if(m==='KOSPI'){drawCandleChart(k+'-chart',bars);const err=chartResponse?.error;$(k+'-index-note').textContent=bars.length?`${bars.length}개 ${({day:'일봉',week:'주봉',month:'월봉',year:'연봉'})[S.period]} · 이동평균 5·10·20·40·60·120 · 거래량`:(err?`네이버 차트 API 오류: ${err}`:'차트 응답은 받았지만 OHLC 데이터를 찾지 못했습니다.');}else{draw(k+'-chart',[{color:'#3478d4',values:bars.map(x=>x.close)}]);$(k+'-index-note').textContent=bars.length?`${bars.length}개 ${({day:'일별',week:'주별',month:'월별',year:'연별'})[S.period]} 지수 데이터`:(chartResponse?.error||'차트 데이터가 없습니다.');}
-const fl=S.flow[m];let intra=htmlIntraday(fl);if(!intra.length)intra=intradayRows(d.aggregate);const daily=marketRows(m),cur=intra.length?intra.at(-1):daily[0];
-for(const t of ['individual','foreign','institution']){const el=$(k+'-'+t),v=cur?cur[t]:null;el.textContent=v!==null&&v!==undefined?fmt(v):'—';el.classList.remove('red','blue');if(v>0)el.classList.add('red');else if(v<0)el.classList.add('blue')}
+const fl=S.flow[m];let intra=intradayRows(d.investorTime);if(!intra.length)intra=intradayRows(d.aggregate);const daily=marketRows(m),cur=daily[0]||(intra.length?intra.at(-1):null);
+for(const t of ['individual','foreign','institution'])setSigned(k+'-'+t,cur?cur[t]:null);
+{const pr0=programRows(m)[0],pi0=programIntradayRows(d.program?.data),pl=pi0.length?pi0.at(-1):null,pc=pr0||pl;setSigned(k+'-pg-arb',pc?pc.arb:null);setSigned(k+'-pg-non',pc?pc.non:null);setSigned(k+'-pg-tot',pc?pc.tot:null);
+ const bd=breadthOf(d);setCount(k+'-b-up',bd.up,'up');setCount(k+'-b-flat',bd.flat,'flat');setCount(k+'-b-down',bd.down,'down')}
 let vol=last?last.volume:null,amt=last?last.amount:null;{const dc=normalizeChartPayload(d.charts?.day?.data||d.charts?.day),dl=dc.length?dc[dc.length-1]:null;if((vol===null||vol===undefined)&&dl)vol=dl.volume;if((amt===null||amt===undefined)&&dl)amt=dl.amount}
-{const pr=latestPriceRow(d.price?.data)||latestPriceRow(d.charts?.day?.data);if(pr){const f=flatten(pr);const a=pickBy(f,[/accumulatedTradingValue/i,/(trading|trade|accumulated).*(value|amount)/i,/(value|amount).*(trading|trade)/i,/pbmn|amount/i]);const v=pickBy(f,[/accumulatedTradingVolume/i,/(trading|trade|accumulated).*volume/i,/volume/i]);if(a!==null)amt=a;if((vol===null||vol===undefined)&&v!==null)vol=v}}
+{const pr=latestPriceRow(d.price?.data)||latestPriceRow(d.charts?.day?.data);if(pr){const f=flatten(pr);const a=pickBy(f,[/accumulatedTradingValue/i,/(trading|trade|accumulated).*(value|amount)/i,/(value|amount).*(trading|trade)/i,/pbmn|amount/i]);const v=pickBy(f,[/accumulatedTradingVolume/i,/(trading|trade|accumulated).*volume/i,/volume/i]);const a2=a!==null?a:guessAmount(f);if(a2!==null)amt=a2;if((vol===null||vol===undefined)&&v!==null)vol=v}}
 if(amt===null||amt===undefined){const f=flatten(d.index?.data&&typeof d.index.data==='object'?d.index.data:{});amt=pickBy(f,[/(trading|trade|accumulated).*(value|amount)/i,/(value|amount).*(trading|trade)/i,/pbmn|amount/i])}
 $(k+'-volume').textContent=fmtVol(vol);$(k+'-amount').textContent=fmtAmt(amt);
 drawIntraday(k+'-flow-chart',intra);
