@@ -172,22 +172,18 @@ function getField(o,arr){if(!o||typeof o!=='object')return null;for(const k of a
 function investorFromNet(o){
  const na=o&&typeof o==='object'?o.netAmounts:undefined;if(na===undefined||na===null)return null;
  const out={individual:null,foreign:null,institution:null};
- const cls=x=>{const t=String(x??'').toLowerCase().replace(/[\s_-]/g,'');if(/^(8000|individual|personal|retail|개인)/.test(t))return 'individual';if(/^(9000|9001|foreign|외국)/.test(t))return 'foreign';if(/^(7050|1000|2000|3000|3100|4000|5000|6000|institution|organ|organization|기관)/.test(t))return 'institution';return null};
- const numIn=v=>{if(v&&typeof v==='object'){for(const [k,x] of Object.entries(v)){if(/(diff|net|pure|buy|sell|amount|value|price)/i.test(k)&&!/(code|type|name|gubun)/i.test(k)){const n=num(x);if(n!==null)return n}}return null}return num(v)};
- const valueOf=it=>{for(const k of ['diffValue','diffPureBuyAmt','netBuyValue','netAmount','pureBuyAmount','diffAmount','netValue','amount','value'])if(it?.[k]!==undefined&&it?.[k]!==null){const n=num(it[k]);if(n!==null)return n}const b=num(it?.buyPrice),s=num(it?.sellPrice);return b!==null&&s!==null?b-s:numIn(it)};
- if(Array.isArray(na)&&na.some(x=>x&&typeof x==='object'&&('investorGubun' in x||'investorType' in x||'investorCode' in x))){
-  const g={};for(const it of na){if(!it||typeof it!=='object')continue;const raw=it.investorGubun??it.investorType??it.investorCode??it.investorName;const key=String(raw??'');const v=valueOf(it);if(v!==null)g[key]=v}
-  const E=v=>v/1e8,keys=Object.keys(g),sum=ks=>ks.reduce((a,k)=>a+g[k],0);
-  const individual=keys.filter(k=>cls(k)==='individual');if(individual.length)out.individual=E(sum(individual));
-  const foreign=keys.filter(k=>/^9000$|^9001$/.test(k)||cls(k)==='foreign');if(foreign.length)out.foreign=E(sum(foreign));
-  const institution=keys.filter(k=>cls(k)==='institution');if(institution.length){const main=institution.includes('7050')?['7050']:institution.filter(k=>k!=='7050');out.institution=E(sum(main))}
+ const cls=x=>{const t=String(x).toLowerCase();if(/individual|personal|retail|개인/.test(t))return 'individual';if(/foreign|외국/.test(t))return 'foreign';if(/institution|organ|기관/.test(t))return 'institution';return null};
+ const numIn=v=>{if(v&&typeof v==='object'){for(const [k,x] of Object.entries(v)){if(/net|amount|value|pure|buy/i.test(k)&&!/code|type|name/i.test(k)){const n=num(x);if(n!==null)return n}}return null}return num(v)};
+ if(Array.isArray(na)&&na.some(x=>x&&typeof x==='object'&&'investorGubun' in x)){
+  const g={};for(const it of na){if(it&&typeof it==='object'&&'investorGubun' in it){const v=num(it.diffValue!==undefined?it.diffValue:(num(it.buyPrice)!==null&&num(it.sellPrice)!==null?num(it.buyPrice)-num(it.sellPrice):null));if(v!==null)g[String(it.investorGubun)]=v}}
+  const E=v=>v/1e8,has=k=>g[k]!==undefined;
+  if(has('8000'))out.individual=E(g['8000']);
+  if(has('9000')||has('9001'))out.foreign=E((g['9000']||0)+(g['9001']||0));
+  if(has('7050'))out.institution=E(g['7050']);else{const ks=['1000','2000','3000','3100','4000','5000','6000'].filter(has);if(ks.length)out.institution=E(ks.reduce((a,k)=>a+g[k],0))}
  }else if(Array.isArray(na)){
-  if(na.length&&na.every(x=>x===null||typeof x!=='object')){['individual','foreign','institution'].forEach((k,i)=>{out[k]=num(na[i])})}
-  else for(const it of na){if(!it||typeof it!=='object')continue;let t=cls(it.investorName??it.investorType??it.investorCode??it.type??it.name);if(!t)for(const v of Object.values(it)){if(typeof v==='string'&&cls(v)){t=cls(v);break}}if(t){const n=numIn(it);if(n!==null)out[t]=n}}
- }else if(typeof na==='object'){
-  const g={};for(const [k,v] of Object.entries(na)){const t=cls(k);if(t){const n=numIn(v);if(n!==null)(g[t]??=[]).push({k,n})}}
-  for(const [t,a] of Object.entries(g)){if(t==='institution'&&a.some(x=>x.k==='7050'))out[t]=a.find(x=>x.k==='7050').n/1e8;else out[t]=a.reduce((z,x)=>z+x.n,0)/1e8}
- }
+  if(na.length&&na.every(x=>x===null||typeof x!=='object')){const ks=['individual','foreign','institution'];ks.forEach((k,i)=>{out[k]=num(na[i])})}
+  else for(const it of na){if(!it||typeof it!=='object')continue;let t=null;for(const v of Object.values(it)){if(typeof v==='string'&&cls(v)){t=cls(v);break}}if(t)out[t]=numIn(it)}
+ }else if(typeof na==='object'){for(const [k,v] of Object.entries(na)){const t=cls(k);if(t)out[t]=numIn(v)}}
  return out.individual===null&&out.foreign===null&&out.institution===null?null:out;
 }
 const FUZZY={individual:[/(individual|personal|retail).*(net|pure)/i,/^(individual|personal|retail)(value|amount|trade)?$/i],foreign:[/foreign.*(net|pure)/i,/^foreign(er)?(value|amount|trade)?$/i],institution:[/(institution|organ).*(net|pure)/i,/^(institution|institutional|organ|organization)(value|amount|trade)?$/i]};
@@ -268,22 +264,14 @@ function draw(id,series,zero=false){const c=$(id);if(!c)return;const w=Math.max(
 const fmtDate=s=>/^\d{8}$/.test(s)?`${s.slice(0,4)}.${s.slice(4,6)}.${s.slice(6,8)}`:(s||'—');
 function timeOf(o){if(!o||typeof o!=='object')return '';for(const k of ['localTradedAt','localDateTime','tradedAt','dateTime','datetime','time','tradeTime','baseTime','bizTime','localTime','hhmm']){if(o[k]===undefined||o[k]===null)continue;const dg=String(o[k]).replace(/\D/g,'');if(dg.length>=12)return dg.slice(8,12);if(dg.length>=4&&dg.length<=6&&/time|hhmm/i.test(k))return dg.slice(0,4)}return ''}
 function intradayRows(payload){
- // 원본 응답 자체가 [시간별 행, ...] 배열인 경우와 여러 응답을 묶은 배열을 구분한다.
- const rowArray=Array.isArray(payload)&&payload.length>0&&payload.filter(o=>o&&typeof o==='object'&&!Array.isArray(o)&&!!timeOf(o)).length>=Math.max(1,Math.ceil(payload.length*.6));
- const sources=rowArray?[payload]:(Array.isArray(payload)?payload:[payload]),out=[];
- for(const source of sources){
-  if(!source)continue;let part=[];
-  for(const arr of findRows(source).sort((a,b)=>b.length-a.length)){
-   const rows=[];
-   for(const o of arr){if(!o||typeof o!=='object')continue;const time=timeOf(o);if(!time)continue;const row={date:dateOf(o)||'0',time,individual:flowVal(o,'individual'),foreign:flowVal(o,'foreign'),institution:flowVal(o,'institution')};if(row.individual!==null||row.foreign!==null||row.institution!==null)rows.push(row)}
-   if(rows.length){part=rows;break;}
-  }
-  out.push(...part);
+ const out=[];
+ for(const arr of findRows(payload).sort((a,b)=>b.length-a.length)){
+  for(const o of arr){if(!o||typeof o!=='object')continue;const time=timeOf(o);if(!time)continue;const row={date:dateOf(o)||'0',time,individual:flowVal(o,'individual'),foreign:flowVal(o,'foreign'),institution:flowVal(o,'institution')};if(row.individual!==null||row.foreign!==null||row.institution!==null)out.push(row)}
+  if(out.length)break;
  }
  if(!out.length)return [];
- const day=out.map(r=>r.date).sort().at(-1),merged=new Map();
- for(const r of out.filter(x=>x.date===day)){const key=r.date+'|'+r.time,old=merged.get(key);if(!old)merged.set(key,r);else for(const t of ['individual','foreign','institution'])if(old[t]===null&&r[t]!==null)old[t]=r[t]}
- return [...merged.values()].sort((a,b)=>a.time.localeCompare(b.time));
+ const day=out.map(r=>r.date).sort().at(-1);
+ return out.filter(r=>r.date===day).sort((a,b)=>a.time.localeCompare(b.time));
 }
 function dedupeByDate(rows){const m=new Map();for(const r of rows){const t=timeOf(r.raw);const old=m.get(r.date);if(!old||t>=old.t)m.set(r.date,{t,r})}return [...m.values()].map(x=>x.r).sort((a,b)=>b.date.localeCompare(a.date))}
 function dailyFlowRows(raw){
@@ -325,7 +313,7 @@ function drawIntraday(id,rows,types=['individual','foreign','institution']){
  if(!vals.length){ctx.fillStyle='#929dad';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText('당일 시간별 수급 데이터가 없습니다',w/2,h/2);return}
  let lo=Math.min(0,...vals),hi=Math.max(0,...vals);if(lo===hi){lo-=1;hi+=1}const padV=(hi-lo)*.05;lo-=padV;hi+=padV;
  const mins=t=>Number(t.slice(0,2))*60+Number(t.slice(2,4));
- const tm=rows.map(r=>mins(r.time));const x0=540,x1=Math.max(541,...tm);
+ let x0=540,x1=930;const tm=rows.map(r=>mins(r.time));x0=Math.min(x0,...tm);x1=Math.max(x1,...tm);
  const p={l:46,r:8,t:10,b:20},cw=w-p.l-p.r,ch=h-p.t-p.b,X=m=>p.l+cw*(m-x0)/(x1-x0),Y=v=>p.t+ch*(hi-v)/(hi-lo);
  ctx.font='9px sans-serif';ctx.lineWidth=1;
  for(let i=0;i<4;i++){const v=hi-(hi-lo)*i/3,y=Y(v);ctx.strokeStyle='#edf0f4';ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();ctx.fillStyle='#929dad';ctx.textAlign='right';ctx.fillText(fmt(v,0),p.l-5,y+3)}
@@ -337,16 +325,15 @@ function drawIntraday(id,rows,types=['individual','foreign','institution']){
 function fmtVol(v){if(v===null||v===undefined)return '—';const sh=v<1e7?v*1000:v;if(sh>=1e8)return (sh/1e8).toLocaleString('ko-KR',{maximumFractionDigits:2})+'억주';return Math.round(sh/1e4).toLocaleString('ko-KR')+'만주'}
 function fmtAmt(v){if(v===null||v===undefined)return '—';const eok=v>=1e12?v/1e8:v>=1e6?v/100:v;if(eok>=1e4)return (eok/1e4).toLocaleString('ko-KR',{maximumFractionDigits:2})+'조원';return Math.round(eok).toLocaleString('ko-KR')+'억원'}
 function normDateStr(s){const m=String(s).match(/(\d{2,4})[.\-](\d{2})[.\-](\d{2})/);if(!m)return '';return (m[1].length===2?'20'+m[1]:m[1])+m[2]+m[3]}
-function htmlIntraday(f){const src=f?.intraday;if(!src)return [];const raw=src.payload??src.rows??[];const rows=intradayRows(raw);return rows.map(r=>({...r,date:r.date==='0'?(src.bizdate||f.bizdate||'0'):r.date}))}
-function mergeIntradayRows(primary,secondary){const m=new Map();for(const r of [...(primary||[]),...(secondary||[])]){if(!r?.time)continue;const key=(r.date||'0')+'|'+r.time,old=m.get(key);if(!old)m.set(key,{...r});else for(const t of ['individual','foreign','institution'])if(old[t]===null||old[t]===undefined){if(r[t]!==null&&r[t]!==undefined)old[t]=r[t]}}return [...m.values()].sort((a,b)=>a.time.localeCompare(b.time))}
-function htmlDaily(f){const src=f?.daily;if(!src)return [];return dedupeByDate(normalizeFlow(src.payload??src.rows??[]))}
-function htmlProgram(f){const src=f?.program;if(!src)return [];return normalizeProgram(src.payload??src.rows??[])}
+function htmlIntraday(f){const src=f?.intraday;if(!src?.rows?.length)return [];const m=new Map();for(const c of src.rows){const t=String(c[0]).replace(':','').padStart(4,'0');if(!/^\d{4}$/.test(t))continue;m.set(t,{date:src.bizdate||'0',time:t,individual:num(c[1]),foreign:num(c[2]),institution:num(c[3])})}return [...m.values()].sort((a,b)=>a.time.localeCompare(b.time))}
+function htmlDaily(f){const m=new Map();for(const c of (f?.daily?.rows||[])){const d=normDateStr(c[0]);if(d)m.set(d,{date:d,individual:num(c[1]),foreign:num(c[2]),institution:num(c[3])})}return [...m.values()].sort((a,b)=>b.date.localeCompare(a.date))}
+function htmlProgram(f){const m=new Map();for(const c of (f?.program?.rows||[])){const d=normDateStr(c[0]);if(!d)continue;const L=c.length;const r=L>=10?{arb:num(c[3]),non:num(c[6]),tot:num(c[9])}:L>=4?{arb:num(c[1]),non:num(c[2]),tot:num(c[3])}:null;if(r)m.set(d,{date:d,...r})}return [...m.values()].sort((a,b)=>b.date.localeCompare(a.date))}
 
 function renderDiag(){
  const el=$('diag');if(!el)return;const L=[];L.push('V-KOSPI(kred.dev): '+(S.vk?(Number.isFinite(S.vk.value)?S.vk.value+'% ('+S.vk.date+')':'실패 '+(S.vk.error||'')):'대기'));
  for(const m of ['KOSPI','KOSDAQ']){
   const f=S.flow[m]||{},d=S.markets[m]||{};
-  L.push(`[${m}] flow-v3 원본파싱: 시간별 ${htmlIntraday(f).length}행 / 일별 ${htmlDaily(f).length}행 / 프로그램 시간별 ${programIntradayRows(f.programTime?.payload??f.programTime?.rows??[]).length}행 / 프로그램 일별 ${htmlProgram(f).length}행`);
+  L.push(`[${m}] flow: 시간별 ${f.intraday?.rows?.length??'-'}행 / 일별 ${f.daily?.rows?.length??'-'}행 / 프로그램 ${f.program?.rows?.length??'-'}행`);
   for(const e of (f.errors||[]))L.push('  flow 오류 '+e.source+': '+e.message);
   for(const e of (S.errors||[]).filter(e=>String(e.source).toUpperCase().startsWith(m)).slice(0,4))L.push('  dashboard 오류 '+e.source+': '+String(e.message).slice(0,120));
   const idx=d.index?.data;L.push('  지수 응답 키: '+(idx&&typeof idx==='object'?Object.keys(flatten(idx)).slice(0,40).join(', '):'없음'));
@@ -362,7 +349,6 @@ function renderDiag(){
     const it=findRows(d.investorTime?.data).sort((a,b)=>b.length-a.length)[0];L.push(`  투자자 시간별: ${it?it.length+'행, 첫 행 '+JSON.stringify(it[0]).slice(0,260):'없음'+(d.investorTime?.error?' ('+d.investorTime.error+')':'')}`+(d.investorTime?.url?' src='+d.investorTime.url.replace(/^https:\/\/[^/]+/,''):'')) }
   { const pp=d.programPaging;L.push('  프로그램 페이징: '+(pp?`전략 ${pp.strategy??'없음'}, 수신 페이지 ${pp.pages}, 날짜 ${pp.totalDates??'-'}개, 시도 [${(pp.tried||[]).join(', ')}]`:'워커가 구버전입니다(programPaging 없음) → 워커 재배포 필요')) }
   { const pg=d.dailyPaging;L.push('  일별 페이징: '+(pg?`전략 ${pg.strategy??'없음'}, 수신 페이지 ${pg.pages}, 날짜 ${pg.totalDates??'-'}개, 시도 [${(pg.tried||[]).join(', ')}]`:'워커가 구버전입니다(dailyPaging 없음) → 워커 재배포 필요')) }
-  { const tp=d.investorTimePaging;L.push('  시간별 투자자 페이징: '+(tp?`전략 ${(tp.strategy||[]).join('+')||'기본 100행'}, 수신 ${tp.points??'-'}시점, 가장 이른 시각 ${tp.oldest??'-'}, 09시부터 ${tp.completeFromOpen?'완료':'미완료'}, 시도 [${(tp.tried||[]).join(', ')}]`:'워커가 구버전입니다(investorTimePaging 없음) → 워커 재배포 필요')) }
   const s1=findRows(d.daily?.data)[0]?.[0],s2=findRows(d.programDaily?.data)[0]?.[0];
   if(s1)L.push('  daily 응답 필드: '+Object.keys(flatten(s1)).slice(0,24).join(', '));
   if(s2)L.push('  program 응답 필드: '+Object.keys(flatten(s2)).slice(0,24).join(', '));
@@ -372,7 +358,7 @@ function renderDiag(){
   const fa=findRows(F?.f?.daily?.data).sort((a,b)=>b.length-a.length)[0],fb=findRows(F?.f?.time?.data).sort((a,b)=>b.length-a.length)[0];
   if(fa)L.push('  FUT daily 첫 행 원본: '+JSON.stringify(fa[0]).slice(0,1200));if(fb)L.push('  FUT time 첫 행 원본: '+JSON.stringify(fb[0]).slice(0,900));
   L.push('  코스피 시간별 지수 출처: '+(F?.f?.kospiIntraday?.kind||'없음')+(F?.f?.kospiIntraday?.url?' '+F.f.kospiIntraday.url:''));
-  {const tp=F?.f?.timePaging;if(tp)L.push(`  FUT 시간별 수집: 전략 ${tp.strategy.join('+')||'없음'}, 고유 시각 ${tp.rows}개, 가장 이른 ${tp.oldest||'-'}, 09시부터 ${tp.completeFromOpen?'완료':'미완료'}, 시도 [${tp.tried.slice(0,8).join(', ')}]`)}
+  {const tp=F?.f?.timePaging;if(tp)L.push(`  FUT 시간별 수집: 전략 ${tp.strategy.join('+')||'없음'}, 고유 시각 ${tp.rows}개, 가장 이른 ${tp.oldest||'-'}, 시도 [${tp.tried.slice(0,8).join(', ')}]`)}
   const pg=F?.f?.dailyPaging;if(pg)L.push(`  FUT 일별 페이징: 전략 ${pg.strategy??'없음'}, 페이지 ${pg.pages}, 날짜 ${pg.totalDates??'-'}개`)}
  if(S.perf&&S.perf.fastNet!==undefined){L.push(`⏱ 1차 ${S.perf.fastNet}ms / 상세 ${S.perf.slowNet??'-'}ms / 그리기 ${S.perf.paint_fast??'-'}+${S.perf.paint_slow??'-'}ms / 서버 호출 느린순:`);(S.timings||[]).slice(0,10).forEach(x=>L.push(`  ${x.ms}ms ${x.st} ${x.u}`))}
  el.textContent=L.join('\n');
@@ -381,7 +367,7 @@ function renderDiag(){
 async function loadVk(force){try{const r=await fetch(`${WORKER}?action=vkospi`,force?{cache:'no-store'}:{});const j=await r.json();if(!r.ok||!j.ok)throw Error(j.error||('HTTP '+r.status));S.vk=j}catch(e){S.vk={error:e.message}}
  for(const k of ['kospi','kosdaq']){const v=$(k+'-vkospi'),dt=$(k+'-vk-date');if(v)v.textContent=Number.isFinite(S.vk.value)?S.vk.value.toFixed(2)+'%':'—';if(dt)dt.textContent=S.vk.date?S.vk.date.slice(5).replace('-','.'):''}
  renderDiag()}
-async function loadFlow(){await Promise.all(['KOSPI','KOSDAQ'].map(async m=>{try{const r=await fetch(`${WORKER}?action=flow&market=${m}`,{cache:'no-store'});const j=await r.json();S.flow[m]=j&&j.ok&&j.intraday?j:{errors:[{source:m+'.flow',message:(j&&j.ok&&!j.intraday)?'워커가 구버전입니다. cloudflare_worker.js를 다시 배포하세요':((j&&j.error)||('HTTP '+r.status))}]}}catch(e){S.flow[m]={errors:[{source:m+'.flow',message:e.message}]}}}));renderMarket('KOSPI');renderMarket('KOSDAQ');renderDiag();if(S.tab==='compare')renderCompare();if(S.tab==='cumulative')renderCumulative()}
+async function loadFlow(){return;await Promise.all(['KOSPI','KOSDAQ'].map(async m=>{try{const r=await fetch(`${WORKER}?action=flow&market=${m}`,{cache:'no-store'});const j=await r.json();S.flow[m]=j&&j.ok&&j.intraday?j:{errors:[{source:m+'.flow',message:(j&&j.ok&&!j.intraday)?'워커가 구버전입니다. cloudflare_worker.js를 다시 배포하세요':((j&&j.error)||('HTTP '+r.status))}]}}catch(e){S.flow[m]={errors:[{source:m+'.flow',message:e.message}]}}}));renderMarket('KOSPI');renderMarket('KOSDAQ');renderDiag();if(S.tab==='compare')renderCompare();if(S.tab==='cumulative')renderCumulative()}
 
 function breadth(f){const out={up:null,flat:null,down:null};const pats={up:/^(up|rise|rising|advance|advancing|increase|plus|ascend)(count|cnt|num|stocks?|issues?|items?)?$/i,flat:/^(flat|steady|unchanged|same|equal|nochange|보합)(count|cnt|num|stocks?|issues?|items?)?$/i,down:/^(down|fall|falling|decline|declining|decrease|minus|descend)(count|cnt|num|stocks?|issues?|items?)?$/i};for(const [k,v] of Object.entries(f)){const tail=k.split('_').pop();for(const t of ['up','flat','down'])if(out[t]===null&&pats[t].test(tail)){const n=num(v);if(n!==null)out[t]=n}}return out}
 function dayBarMap(d,flowRows=[]){const mp=new Map();const bars=normalizeChartPayload(d.charts?.day?.data||d.charts?.day);bars.forEach((b,i)=>{const dt=String(b.date).replace(/\D/g,'').slice(0,8);const prev=i>0?bars[i-1].close:null;const ch=prev!==null?b.close-prev:(b.change??null);const rt=prev?((b.close-prev)/prev*100):(b.rate??null);mp.set(dt,{close:b.close,change:ch,rate:rt})});
@@ -406,6 +392,15 @@ function programIntradayRows(payload){
  const day=out.map(r=>r.date).sort().at(-1);
  return out.filter(r=>r.date===day).sort((a,b)=>a.time.localeCompare(b.time));
 }
+function mergeIntra(payloads,parse){
+ const all=[];for(const p of payloads){if(!p)continue;try{all.push(...parse(p))}catch(e){}}
+ if(!all.length)return [];
+ const day=all.map(r=>r.date).filter(x=>x&&x!=='0').sort().at(-1)||'0',m=new Map();
+ for(const r of all){if(day!=='0'&&r.date!=='0'&&r.date!==day)continue;if(r.time<'0900'||r.time>'1545')continue;m.set(r.time,{...r,date:r.date==='0'?day:r.date})}
+ return [...m.values()].sort((a,b)=>a.time.localeCompare(b.time));
+}
+const investorIntra=d=>mergeIntra([d.investorTime,...(d.investorTimeMore||[])],intradayRows);
+const programIntra=d=>mergeIntra([d.program?.data,...(d.programTimeMore||[])],programIntradayRows);
 function latestPriceRow(payload){const arr=findRows(payload).sort((a,b)=>b.length-a.length)[0];if(!arr||!arr.length)return null;let best=null,bd='';for(const o of arr){if(!o||typeof o!=='object')continue;const dt=dateOf(o)||'';if(!best||dt>bd){best=o;bd=dt}}return best}
 
 function setSigned(id,v,fmtFn){const el=$(id);if(!el)return;el.classList.remove('red','blue','blk','muted');if(v===null||v===undefined){el.textContent='—';return}el.textContent=(fmtFn||fmt)(v);el.classList.add(v>0?'red':v<0?'blue':'blk')}
@@ -465,9 +460,9 @@ function programAll(raw){const mp=new Map();for(const r of [...normalizeProgram(
 function programRows(m){const raw=S.markets[m]||{};return bestOf([()=>programAll(raw),()=>normalizeProgram(raw.programDaily?.data),()=>htmlProgram(S.flow[m]),()=>normalizeProgram(raw.program?.data)])}
 function renderMarket(m){const k=m.toLowerCase(),d=S.markets[m]||{},quote=normalizeIndex(d.index?.data||d.index),last=quote.at(-1);if(last){$(k+'-value').textContent=fmt(last.close,2);const delta=last.change,rate=last.rate;$(k+'-change').textContent=delta===null?'—':`${delta>0?'+':''}${fmt(delta,2)} (${rate===null?'—':rate.toFixed(2)+'%'})`;$(k+'-change').className='index-change '+(delta>0?'red':delta<0?'blue':'muted');}else{$(k+'-value').textContent='—';$(k+'-change').textContent='—';}
 const chartResponse=d.charts?.[S.period];const allBars=normalizeChartPayload(chartResponse?.data||chartResponse),nShow=S.period==='day'?(S.idxDays||120):120,bars=allBars.slice(-nShow);{drawCandleChart(k+'-chart',allBars,nShow);const tb=$(k+'-idx-tabs');if(tb)tb.style.display=S.period==='day'?'flex':'none';document.querySelectorAll('[data-idx]').forEach(b=>b.classList.toggle('on',Number(b.dataset.idx)===(S.idxDays||120)));const err=chartResponse?.error;$(k+'-index-note').textContent=bars.length?`${bars.length}개 ${({day:'일봉',week:'주봉',month:'월봉',year:'연봉'})[S.period]} · 이동평균 5·10·20·40·60·120 · 거래량`:(err?`네이버 차트 API 오류: ${err}`:'차트 응답은 받았지만 OHLC 데이터를 찾지 못했습니다.');}
-const fl=S.flow[m];let intra=mergeIntradayRows(intradayRows([d.investorTime?.data,...(d.investorTimeMore||[])]),htmlIntraday(fl));if(!intra.length)intra=intradayRows(d.aggregate);const daily=marketRows(m),cur=daily[0]||(intra.length?intra.at(-1):null);
+const fl=S.flow[m];let intra=investorIntra(d);if(!intra.length)intra=mergeIntra([d.aggregate],intradayRows);const daily=marketRows(m),cur=daily[0]||(intra.length?intra.at(-1):null);
 for(const t of ['individual','foreign','institution'])setSigned(k+'-'+t,cur?cur[t]:null);
-{const pr0=programRows(m)[0],pi0=programIntradayRows(d.program?.data),piFallback=programIntradayRows(fl?.programTime?.payload??fl?.programTime?.rows),pi=pi0.length?pi0:piFallback,pl=pi.length?pi.at(-1):null,pc=pr0||pl;setSigned(k+'-pg-arb',pc?pc.arb:null);setSigned(k+'-pg-non',pc?pc.non:null);setSigned(k+'-pg-tot',pc?pc.tot:null);
+{const pr0=programRows(m)[0],pi0=programIntra(d),pl=pi0.length?pi0.at(-1):null,pc=pr0||pl;setSigned(k+'-pg-arb',pc?pc.arb:null);setSigned(k+'-pg-non',pc?pc.non:null);setSigned(k+'-pg-tot',pc?pc.tot:null);
  const bd=breadthOf(d);setCount(k+'-b-up',bd.up,'up');setCount(k+'-b-flat',bd.flat,'flat');setCount(k+'-b-down',bd.down,'down')}
 let vol=last?last.volume:null,amt=last?last.amount:null;{const dc=normalizeChartPayload(d.charts?.day?.data||d.charts?.day),dl=dc.length?dc[dc.length-1]:null;if((vol===null||vol===undefined)&&dl)vol=dl.volume;if((amt===null||amt===undefined)&&dl)amt=dl.amount}
 {const pr=latestPriceRow(d.price?.data)||latestPriceRow(d.charts?.day?.data);if(pr){const f=flatten(pr);const a=pickBy(f,[/accumulatedTradingValue/i,/(trading|trade|accumulated).*(value|amount)/i,/(value|amount).*(trading|trade)/i,/pbmn|amount/i]);const v=pickBy(f,[/accumulatedTradingVolume/i,/(trading|trade|accumulated).*volume/i,/volume/i]);const a2=a!==null?a:guessAmount(f);if(a2!==null)amt=a2;if((vol===null||vol===undefined)&&v!==null)vol=v}}
@@ -481,7 +476,7 @@ $(k+'-flow-note').textContent=intra.length?`당일 ${intra.length}개 시점 · 
 renderCum(m);
 {const bm=dayBarMap(d,daily);renderPaged(m+'-flow',k+'-flow-table',k+'-flow-more',daily,r=>dailyRowCells(r,bm),7)}
 const prog=programRows(m);
-{const pi0=programIntradayRows(d.program?.data),pi=pi0.length?pi0:programIntradayRows(fl?.programTime?.payload??fl?.programTime?.rows);drawIntraday(k+'-prog-chart',pi,['arb','non','tot']);$(k+'-prog-date').textContent=pi.length?`${fmtDate(pi[0].date)} ${pi[0].time.slice(0,2)}:${pi[0].time.slice(2)}~${pi.at(-1).time.slice(0,2)}:${pi.at(-1).time.slice(2)}`:'';$(k+'-prog-note').textContent=pi.length?`당일 ${pi.length}개 시점 · 원본 응답 값 그대로(억원 환산)`:'당일 시간별 프로그램 데이터를 받지 못했습니다.'}
+{const pi=programIntra(d);drawIntraday(k+'-prog-chart',pi,['arb','non','tot']);$(k+'-prog-date').textContent=pi.length?`${fmtDate(pi[0].date)} ${pi[0].time.slice(0,2)}:${pi[0].time.slice(2)}~${pi.at(-1).time.slice(0,2)}:${pi.at(-1).time.slice(2)}`:'';$(k+'-prog-note').textContent=pi.length?`당일 ${pi.length}개 시점 · 원본 응답 값 그대로(억원 환산)`:'당일 시간별 프로그램 데이터를 받지 못했습니다.'}
 renderPaged(m+'-program',k+'-program',k+'-program-more',prog,r=>[fmtDate(r.date),r.arb,r.non,r.tot],4);renderPCum(m);
 if(!prog.length&&(d.programDaily?.error||d.program?.error))$(k+'-program').innerHTML=`<tr><td colspan="4" class="empty">프로그램 매매 응답 오류: ${d.programDaily?.error||d.program?.error}</td></tr>`;
 }
@@ -527,7 +522,7 @@ function futRowsFrom(payloads,kind){
    if(got)break}}
  if(kind==='day'){const m=new Map();for(const r of out){const old=m.get(r.date);if(!old||r.time>=old.time)m.set(r.date,r)}return [...m.values()].sort((a,b)=>b.date.localeCompare(a.date))}
  if(!out.length)return [];
- const day=out.map(r=>r.date).sort().at(-1),m=new Map();out.filter(r=>r.date===day).forEach(r=>m.set(r.time,r));
+ const day=out.map(r=>r.date).filter(x=>x!=='0').sort().at(-1)||'0',m=new Map();out.filter(r=>r.date===day||r.date==='0').forEach(r=>m.set(r.time,r));
  return [...m.values()].sort((a,b)=>a.time.localeCompare(b.time));
 }
 const hasUnit=(rows,u)=>rows.some(r=>FT.some(t=>r[u][t]!==null&&r[u][t]!==undefined));
@@ -572,7 +567,7 @@ function drawIntradayDual(id,rows,idx,types=['individual','foreign','institution
  let lo=Math.min(0,...vals),hi=Math.max(0,...vals);if(lo===hi){lo-=1;hi+=1}const pv=(hi-lo)*.05;lo-=pv;hi+=pv;
  const iv=idx.map(r=>r.close).filter(Number.isFinite);let il=0,ih=1;if(iv.length){il=Math.min(...iv);ih=Math.max(...iv);if(il===ih){il-=1;ih+=1}const pi=(ih-il)*.1;il-=pi;ih+=pi}
  const mins=t=>Number(t.slice(0,2))*60+Number(t.slice(2,4));
- const tm=[...rows.map(r=>mins(r.time)),...idx.map(r=>mins(r.time))];const x0=540,x1=Math.max(541,...tm);
+ const tm=[...rows.map(r=>mins(r.time)),...idx.map(r=>mins(r.time))];let x0=Math.min(540,...tm),x1=Math.max(930,...tm);
  const p={l:46,r:iv.length?46:8,t:10,b:20},cw=w-p.l-p.r,ch=h-p.t-p.b,X=m=>p.l+cw*(m-x0)/(x1-x0),Y=v=>p.t+ch*(hi-v)/(hi-lo),Y2=v=>p.t+ch*(ih-v)/(ih-il);
  ctx.font='9px sans-serif';ctx.lineWidth=1;
  for(let i=0;i<4;i++){const v=hi-(hi-lo)*i/3,y=Y(v);ctx.strokeStyle='#edf0f4';ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();ctx.fillStyle='#929dad';ctx.textAlign='right';ctx.fillText(fmt(v,0),p.l-5,y+3);if(iv.length){ctx.textAlign='left';ctx.fillStyle='#26364f';ctx.fillText(fmt(ih-(ih-il)*i/3,2),w-p.r+4,y+3)}}
