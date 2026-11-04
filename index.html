@@ -202,7 +202,7 @@ function normalizeIndex(payload){
   walk(payload);
   findRows(payload).forEach(a=>candidates.push(a));
  }
- const dateKeys=['localDate','localTradedAt','tradeDate','tradingDate','bizDate','bizdate','date','trdDd','x'];
+ const dateKeys=['localDate','localTradedAt','localDateTime','tradeDate','tradingDate','bizDate','bizdate','date','baseDate','trdDd','x'];
  const val=(o,ks)=>{for(const k of ks)if(o?.[k]!==undefined&&o[k]!==null){const n=num(o[k]);if(n!==null)return n}return null};
  for(const arr of candidates){
   const rows=arr.map(o=>{
