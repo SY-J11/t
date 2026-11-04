@@ -347,6 +347,7 @@ function renderDiag(){
   { const pn=panelInfo(d);L.push(`  전일/시가/고가/저가/거래량/대금 패널: 거래량 ${pn.volRaw??'없음'} / 대금 ${pn.amtRaw??'없음'}`) }
   { const bd=breadthOf(d);L.push(`  등락종목: 상승 ${bd.up??'-'} / 보합 ${bd.flat??'-'} / 하락 ${bd.down??'-'}`+(d.breadth?.error?' ('+d.breadth.error+')':'')+(d.breadth?.url?' src='+d.breadth.url.replace(/^https:\/\/[^/]+/,''):''));
     const it=findRows(d.investorTime?.data).sort((a,b)=>b.length-a.length)[0];L.push(`  투자자 시간별: ${it?it.length+'행, 첫 행 '+JSON.stringify(it[0]).slice(0,260):'없음'+(d.investorTime?.error?' ('+d.investorTime.error+')':'')}`+(d.investorTime?.url?' src='+d.investorTime.url.replace(/^https:\/\/[^/]+/,''):'')) }
+  { const a=d.investorTimePaging,b=d.programTimePaging,f=x=>x?`첫 응답 ${x.first}행 → 총 ${x.rows}시점, 최초 ${x.oldest?x.oldest.slice(0,2)+':'+x.oldest.slice(2,4):'없음'}, 시도 [${(x.tried||[]).join(', ')||'추가 요청 없음'}]`:'워커가 구버전입니다(intraday-v2 아님) → cloudflare_worker.js 재배포 필요';L.push('  투자자 시간별 수집: '+f(a));L.push('  프로그램 시간별 수집: '+f(b)) }
   { const pp=d.programPaging;L.push('  프로그램 페이징: '+(pp?`전략 ${pp.strategy??'없음'}, 수신 페이지 ${pp.pages}, 날짜 ${pp.totalDates??'-'}개, 시도 [${(pp.tried||[]).join(', ')}]`:'워커가 구버전입니다(programPaging 없음) → 워커 재배포 필요')) }
   { const pg=d.dailyPaging;L.push('  일별 페이징: '+(pg?`전략 ${pg.strategy??'없음'}, 수신 페이지 ${pg.pages}, 날짜 ${pg.totalDates??'-'}개, 시도 [${(pg.tried||[]).join(', ')}]`:'워커가 구버전입니다(dailyPaging 없음) → 워커 재배포 필요')) }
   const s1=findRows(d.daily?.data)[0]?.[0],s2=findRows(d.programDaily?.data)[0]?.[0];
@@ -472,11 +473,11 @@ $(k+'-volume').textContent=fmtVol(vol);$(k+'-amount').textContent=fmtAmt(amt);
 drawIntraday(k+'-flow-chart',intra);
 $(k+'-intra-date').textContent=intra.length?`${fmtDate(intra[0].date)} ${intra[0].time.slice(0,2)}:${intra[0].time.slice(2)}~${intra.at(-1).time.slice(0,2)}:${intra.at(-1).time.slice(2)}`:'';
 const errs=[...(S.errors||[]),...(fl?.errors||[])].filter(e=>String(e.source).toUpperCase().startsWith(m)).map(e=>e.source+': '+e.message).slice(0,3).join(' / ');
-$(k+'-flow-note').textContent=intra.length?`당일 ${intra.length}개 시점 · 시간별 누적 순매수(억원) · 최신 ${intra.at(-1).time.slice(0,2)}:${intra.at(-1).time.slice(2)}`:('당일 시간별 수급 데이터를 받지 못했습니다.'+(errs?' ['+errs+']':''));
+$(k+'-flow-note').textContent=intra.length?`당일 ${intra.length}개 시점 · 시간별 누적 순매수(억원) · 최신 ${intra.at(-1).time.slice(0,2)}:${intra.at(-1).time.slice(2)}`+(intra[0].time>'0915'?` · 09:00~${intra[0].time.slice(0,2)}:${intra[0].time.slice(2)} 구간은 수신되지 않았습니다`:''):('당일 시간별 수급 데이터를 받지 못했습니다.'+(errs?' ['+errs+']':''));
 renderCum(m);
 {const bm=dayBarMap(d,daily);renderPaged(m+'-flow',k+'-flow-table',k+'-flow-more',daily,r=>dailyRowCells(r,bm),7)}
 const prog=programRows(m);
-{const pi=programIntra(d);drawIntraday(k+'-prog-chart',pi,['arb','non','tot']);$(k+'-prog-date').textContent=pi.length?`${fmtDate(pi[0].date)} ${pi[0].time.slice(0,2)}:${pi[0].time.slice(2)}~${pi.at(-1).time.slice(0,2)}:${pi.at(-1).time.slice(2)}`:'';$(k+'-prog-note').textContent=pi.length?`당일 ${pi.length}개 시점 · 원본 응답 값 그대로(억원 환산)`:'당일 시간별 프로그램 데이터를 받지 못했습니다.'}
+{const pi=programIntra(d);drawIntraday(k+'-prog-chart',pi,['arb','non','tot']);$(k+'-prog-date').textContent=pi.length?`${fmtDate(pi[0].date)} ${pi[0].time.slice(0,2)}:${pi[0].time.slice(2)}~${pi.at(-1).time.slice(0,2)}:${pi.at(-1).time.slice(2)}`:'';$(k+'-prog-note').textContent=pi.length?`당일 ${pi.length}개 시점 · 원본 응답 값 그대로(억원 환산)`+(pi[0].time>'0915'?` · 09:00~${pi[0].time.slice(0,2)}:${pi[0].time.slice(2)} 구간은 수신되지 않았습니다`:''):'당일 시간별 프로그램 데이터를 받지 못했습니다.'}
 renderPaged(m+'-program',k+'-program',k+'-program-more',prog,r=>[fmtDate(r.date),r.arb,r.non,r.tot],4);renderPCum(m);
 if(!prog.length&&(d.programDaily?.error||d.program?.error))$(k+'-program').innerHTML=`<tr><td colspan="4" class="empty">프로그램 매매 응답 오류: ${d.programDaily?.error||d.program?.error}</td></tr>`;
 }
