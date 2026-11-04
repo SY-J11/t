@@ -220,7 +220,7 @@ function normalizeChartPayload(payload){
  const rows=normalizeIndex(payload);
  return rows.filter(r=>r.date&&r.close!==null);
 }
-const IDX_TABS={day:[5,10,20,40,60,100,120,200,240],week:[4,8,16,24,32,64,128,256,512],month:[6,12,18,24,30,36,42,48,54],year:[10,15,20,25,30,35,40,45,50]};
+const IDX_TABS={day:[5,10,20,40,60,100,120,200,240],week:[4,8,16,24,32,64,128,256,512],month:[6,12,18,24,30,36,42,48,60],year:[10,15,20,25]};
 const IDX_UNIT={day:'일',week:'주',month:'월',year:'년'};
 const IDX_DEF={day:120,week:24,month:12,year:10};
 S.idxN={...IDX_DEF};
