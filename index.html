@@ -59,6 +59,7 @@ table td:first-child,.cmp-card td:first-child{text-align:center!important}
 .xh-tip{position:absolute;top:4px;z-index:5;display:none;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:6px;box-shadow:0 2px 8px rgba(32,41,56,.14);padding:4px 7px;font-size:10px;line-height:14px;color:var(--text);white-space:nowrap;font-variant-numeric:tabular-nums}
 .xh-tip b{font-weight:700}.xh-tip i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle}.xh-tip em{font-style:normal;font-weight:700}.xh-tip .p{color:var(--red)}.xh-tip .n{color:var(--blue)}.xh-tip .m{color:var(--muted);font-weight:400}
 @media(max-width:600px){.price-chart{height:264px!important}}
+.us-link{text-decoration:none}
 </style>
 </head>
 <body>
@@ -67,7 +68,7 @@ table td:first-child,.cmp-card td:first-child{text-align:center!important}
 <main>
 <div class="topline"><span class="sub" id="marketCaption">국내 시장 자금 흐름</span><span class="updated" id="updated">데이터 연결 중</span></div>
 <nav class="nav" id="nav">
-<button class="active" data-tab="kospi">코스피</button><button data-tab="kosdaq">코스닥</button><button data-tab="futures">선물</button><button data-tab="compare">통합 비교</button><button data-tab="cumulative">누적 수급</button>
+<button class="active" data-tab="kospi">코스피</button><button data-tab="kosdaq">코스닥</button><button data-tab="futures">선물</button><button data-tab="compare">통합 비교</button><button data-tab="cumulative">누적 수급</button><button data-tab="us">미국</button>
 </nav>
 <section class="panel active" id="panel-kospi">
 <div class="card">
@@ -167,6 +168,64 @@ table td:first-child,.cmp-card td:first-child{text-align:center!important}
 
 <section class="panel" id="panel-cumulative">
 <div class="card"><div class="card-title"><b>누적 순매수 흐름</b><span class="sub">선택 기간 첫 거래일 = 0</span></div><div class="cum-tabs nine" id="cum-days"><button data-cumflow="5">5일</button><button data-cumflow="10" class="on">10일</button><button data-cumflow="20">20일</button><button data-cumflow="40">40일</button><button data-cumflow="60">60일</button><button data-cumflow="100">100일</button><button data-cumflow="120">120일</button><button data-cumflow="200">200일</button><button data-cumflow="240">240일</button></div><div class="market-switch" id="cum-market"><button class="active" data-market="KOSPI">코스피</button><button data-market="KOSDAQ">코스닥</button><button data-market="FUT">선물</button></div><div class="chart tall"><canvas id="cum-chart"></canvas></div><div class="legend"><span><i style="background:#e34b55"></i>개인</span><span><i style="background:#3478d4"></i>외국인</span><span><i style="background:#159b76"></i>기관</span></div><div class="note" id="cum-note">실제 일별 수급이 수신되면 누적값을 계산합니다.</div></div>
+</section>
+
+<section class="panel" id="panel-us">
+<div class="card" data-usym="IXIC">
+<div class="card-title"><b>나스닥 종합</b><a class="sub us-link" href="https://stock.naver.com/worldstock/index/.IXIC/price" target="_blank" rel="noopener noreferrer">NASDAQ Composite · 네이버 ↗</a></div>
+<div class="index-main"><span class="index-value" id="us-IXIC-value">—</span><span class="index-change muted" id="us-IXIC-change">—</span><div class="seg"><button class="active" data-uper="day">일</button><button data-uper="week">주</button><button data-uper="month">월</button><button data-uper="year">년</button></div></div>
+<div class="ma-legend"><span><i style="background:#e34b55"></i>MA5</span><span><i style="background:#e6a23c"></i>MA10</span><span><i style="background:#159b76"></i>MA20</span><span><i style="background:#3478d4"></i>MA40</span><span><i style="background:#8b65c5"></i>MA60</span><span><i style="background:#687487"></i>MA120</span></div><div class="cum-tabs nine" id="us-IXIC-idx-tabs"><button data-uidx="5">5일</button><button data-uidx="10">10일</button><button data-uidx="20">20일</button><button data-uidx="40">40일</button><button data-uidx="60">60일</button><button data-uidx="100">100일</button><button data-uidx="120" class="on">120일</button><button data-uidx="200">200일</button><button data-uidx="240">240일</button></div><div class="chart price-chart"><canvas id="us-IXIC-chart"></canvas></div>
+<div class="note" id="us-IXIC-note">데이터를 불러오고 있습니다.</div>
+</div>
+<div class="card" data-usym="INX">
+<div class="card-title"><b>S&amp;P 500</b><a class="sub us-link" href="https://stock.naver.com/worldstock/index/.INX/price" target="_blank" rel="noopener noreferrer">S&amp;P 500 · 네이버 ↗</a></div>
+<div class="index-main"><span class="index-value" id="us-INX-value">—</span><span class="index-change muted" id="us-INX-change">—</span><div class="seg"><button class="active" data-uper="day">일</button><button data-uper="week">주</button><button data-uper="month">월</button><button data-uper="year">년</button></div></div>
+<div class="ma-legend"><span><i style="background:#e34b55"></i>MA5</span><span><i style="background:#e6a23c"></i>MA10</span><span><i style="background:#159b76"></i>MA20</span><span><i style="background:#3478d4"></i>MA40</span><span><i style="background:#8b65c5"></i>MA60</span><span><i style="background:#687487"></i>MA120</span></div><div class="cum-tabs nine" id="us-INX-idx-tabs"><button data-uidx="5">5일</button><button data-uidx="10">10일</button><button data-uidx="20">20일</button><button data-uidx="40">40일</button><button data-uidx="60">60일</button><button data-uidx="100">100일</button><button data-uidx="120" class="on">120일</button><button data-uidx="200">200일</button><button data-uidx="240">240일</button></div><div class="chart price-chart"><canvas id="us-INX-chart"></canvas></div>
+<div class="note" id="us-INX-note">데이터를 불러오고 있습니다.</div>
+</div>
+<div class="card" data-usym="SOX">
+<div class="card-title"><b>필라델피아 반도체 지수</b><a class="sub us-link" href="https://stock.naver.com/worldstock/index/.SOX/price" target="_blank" rel="noopener noreferrer">PHLX SOX · 네이버 ↗</a></div>
+<div class="index-main"><span class="index-value" id="us-SOX-value">—</span><span class="index-change muted" id="us-SOX-change">—</span><div class="seg"><button class="active" data-uper="day">일</button><button data-uper="week">주</button><button data-uper="month">월</button><button data-uper="year">년</button></div></div>
+<div class="ma-legend"><span><i style="background:#e34b55"></i>MA5</span><span><i style="background:#e6a23c"></i>MA10</span><span><i style="background:#159b76"></i>MA20</span><span><i style="background:#3478d4"></i>MA40</span><span><i style="background:#8b65c5"></i>MA60</span><span><i style="background:#687487"></i>MA120</span></div><div class="cum-tabs nine" id="us-SOX-idx-tabs"><button data-uidx="5">5일</button><button data-uidx="10">10일</button><button data-uidx="20">20일</button><button data-uidx="40">40일</button><button data-uidx="60">60일</button><button data-uidx="100">100일</button><button data-uidx="120" class="on">120일</button><button data-uidx="200">200일</button><button data-uidx="240">240일</button></div><div class="chart price-chart"><canvas id="us-SOX-chart"></canvas></div>
+<div class="note" id="us-SOX-note">데이터를 불러오고 있습니다.</div>
+</div>
+<div class="card" data-usym="NDX">
+<div class="card-title"><b>나스닥 100 선물</b><a class="sub us-link" href="https://stock.naver.com/worldstock/index/.NDX/price" target="_blank" rel="noopener noreferrer">NASDAQ 100 · 네이버 ↗</a></div>
+<div class="index-main"><span class="index-value" id="us-NDX-value">—</span><span class="index-change muted" id="us-NDX-change">—</span><div class="seg"><button class="active" data-uper="day">일</button><button data-uper="week">주</button><button data-uper="month">월</button><button data-uper="year">년</button></div></div>
+<div class="ma-legend"><span><i style="background:#e34b55"></i>MA5</span><span><i style="background:#e6a23c"></i>MA10</span><span><i style="background:#159b76"></i>MA20</span><span><i style="background:#3478d4"></i>MA40</span><span><i style="background:#8b65c5"></i>MA60</span><span><i style="background:#687487"></i>MA120</span></div><div class="cum-tabs nine" id="us-NDX-idx-tabs"><button data-uidx="5">5일</button><button data-uidx="10">10일</button><button data-uidx="20">20일</button><button data-uidx="40">40일</button><button data-uidx="60">60일</button><button data-uidx="100">100일</button><button data-uidx="120" class="on">120일</button><button data-uidx="200">200일</button><button data-uidx="240">240일</button></div><div class="chart price-chart"><canvas id="us-NDX-chart"></canvas></div>
+<div class="note" id="us-NDX-note">데이터를 불러오고 있습니다.</div>
+</div>
+<div class="card" data-usym="VIX">
+<div class="card-title"><b>VIX</b><a class="sub us-link" href="https://stock.naver.com/worldstock/index/.VIX/price" target="_blank" rel="noopener noreferrer">CBOE VIX · 네이버 ↗</a></div>
+<div class="index-main"><span class="index-value" id="us-VIX-value">—</span><span class="index-change muted" id="us-VIX-change">—</span><div class="seg"><button class="active" data-uper="day">일</button><button data-uper="week">주</button><button data-uper="month">월</button><button data-uper="year">년</button></div></div>
+<div class="ma-legend"><span><i style="background:#e34b55"></i>MA5</span><span><i style="background:#e6a23c"></i>MA10</span><span><i style="background:#159b76"></i>MA20</span><span><i style="background:#3478d4"></i>MA40</span><span><i style="background:#8b65c5"></i>MA60</span><span><i style="background:#687487"></i>MA120</span></div><div class="cum-tabs nine" id="us-VIX-idx-tabs"><button data-uidx="5">5일</button><button data-uidx="10">10일</button><button data-uidx="20">20일</button><button data-uidx="40">40일</button><button data-uidx="60">60일</button><button data-uidx="100">100일</button><button data-uidx="120" class="on">120일</button><button data-uidx="200">200일</button><button data-uidx="240">240일</button></div><div class="chart price-chart"><canvas id="us-VIX-chart"></canvas></div>
+<div class="note" id="us-VIX-note">데이터를 불러오고 있습니다.</div>
+</div>
+<div class="card" data-usym="DXY">
+<div class="card-title"><b>달러인덱스</b><a class="sub us-link" href="https://stock.naver.com/marketindex/exchange/.DXY/price" target="_blank" rel="noopener noreferrer">DXY · 네이버 ↗</a></div>
+<div class="index-main"><span class="index-value" id="us-DXY-value">—</span><span class="index-change muted" id="us-DXY-change">—</span><div class="seg"><button class="active" data-uper="day">일</button><button data-uper="week">주</button><button data-uper="month">월</button><button data-uper="year">년</button></div></div>
+<div class="ma-legend"><span><i style="background:#e34b55"></i>MA5</span><span><i style="background:#e6a23c"></i>MA10</span><span><i style="background:#159b76"></i>MA20</span><span><i style="background:#3478d4"></i>MA40</span><span><i style="background:#8b65c5"></i>MA60</span><span><i style="background:#687487"></i>MA120</span></div><div class="cum-tabs nine" id="us-DXY-idx-tabs"><button data-uidx="5">5일</button><button data-uidx="10">10일</button><button data-uidx="20">20일</button><button data-uidx="40">40일</button><button data-uidx="60">60일</button><button data-uidx="100">100일</button><button data-uidx="120" class="on">120일</button><button data-uidx="200">200일</button><button data-uidx="240">240일</button></div><div class="chart price-chart"><canvas id="us-DXY-chart"></canvas></div>
+<div class="note" id="us-DXY-note">데이터를 불러오고 있습니다.</div>
+</div>
+<div class="card" data-usym="WTI">
+<div class="card-title"><b>WTI</b><a class="sub us-link" href="https://stock.naver.com/marketindex/energy/CLcv1/price" target="_blank" rel="noopener noreferrer">서부텍사스산 원유 · 네이버 ↗</a></div>
+<div class="index-main"><span class="index-value" id="us-WTI-value">—</span><span class="index-change muted" id="us-WTI-change">—</span><div class="seg"><button class="active" data-uper="day">일</button><button data-uper="week">주</button><button data-uper="month">월</button><button data-uper="year">년</button></div></div>
+<div class="ma-legend"><span><i style="background:#e34b55"></i>MA5</span><span><i style="background:#e6a23c"></i>MA10</span><span><i style="background:#159b76"></i>MA20</span><span><i style="background:#3478d4"></i>MA40</span><span><i style="background:#8b65c5"></i>MA60</span><span><i style="background:#687487"></i>MA120</span></div><div class="cum-tabs nine" id="us-WTI-idx-tabs"><button data-uidx="5">5일</button><button data-uidx="10">10일</button><button data-uidx="20">20일</button><button data-uidx="40">40일</button><button data-uidx="60">60일</button><button data-uidx="100">100일</button><button data-uidx="120" class="on">120일</button><button data-uidx="200">200일</button><button data-uidx="240">240일</button></div><div class="chart price-chart"><canvas id="us-WTI-chart"></canvas></div>
+<div class="note" id="us-WTI-note">데이터를 불러오고 있습니다.</div>
+</div>
+<div class="card" data-usym="BRENT">
+<div class="card-title"><b>브렌트유</b><a class="sub us-link" href="https://stock.naver.com/marketindex/energy/LCOcv1/price" target="_blank" rel="noopener noreferrer">Brent Crude · 네이버 ↗</a></div>
+<div class="index-main"><span class="index-value" id="us-BRENT-value">—</span><span class="index-change muted" id="us-BRENT-change">—</span><div class="seg"><button class="active" data-uper="day">일</button><button data-uper="week">주</button><button data-uper="month">월</button><button data-uper="year">년</button></div></div>
+<div class="ma-legend"><span><i style="background:#e34b55"></i>MA5</span><span><i style="background:#e6a23c"></i>MA10</span><span><i style="background:#159b76"></i>MA20</span><span><i style="background:#3478d4"></i>MA40</span><span><i style="background:#8b65c5"></i>MA60</span><span><i style="background:#687487"></i>MA120</span></div><div class="cum-tabs nine" id="us-BRENT-idx-tabs"><button data-uidx="5">5일</button><button data-uidx="10">10일</button><button data-uidx="20">20일</button><button data-uidx="40">40일</button><button data-uidx="60">60일</button><button data-uidx="100">100일</button><button data-uidx="120" class="on">120일</button><button data-uidx="200">200일</button><button data-uidx="240">240일</button></div><div class="chart price-chart"><canvas id="us-BRENT-chart"></canvas></div>
+<div class="note" id="us-BRENT-note">데이터를 불러오고 있습니다.</div>
+</div>
+<div class="card" data-usym="GOLD">
+<div class="card-title"><b>국제 금</b><a class="sub us-link" href="https://stock.naver.com/marketindex/metals/GCcv1/price" target="_blank" rel="noopener noreferrer">Gold · 네이버 ↗</a></div>
+<div class="index-main"><span class="index-value" id="us-GOLD-value">—</span><span class="index-change muted" id="us-GOLD-change">—</span><div class="seg"><button class="active" data-uper="day">일</button><button data-uper="week">주</button><button data-uper="month">월</button><button data-uper="year">년</button></div></div>
+<div class="ma-legend"><span><i style="background:#e34b55"></i>MA5</span><span><i style="background:#e6a23c"></i>MA10</span><span><i style="background:#159b76"></i>MA20</span><span><i style="background:#3478d4"></i>MA40</span><span><i style="background:#8b65c5"></i>MA60</span><span><i style="background:#687487"></i>MA120</span></div><div class="cum-tabs nine" id="us-GOLD-idx-tabs"><button data-uidx="5">5일</button><button data-uidx="10">10일</button><button data-uidx="20">20일</button><button data-uidx="40">40일</button><button data-uidx="60">60일</button><button data-uidx="100">100일</button><button data-uidx="120" class="on">120일</button><button data-uidx="200">200일</button><button data-uidx="240">240일</button></div><div class="chart price-chart"><canvas id="us-GOLD-chart"></canvas></div>
+<div class="note" id="us-GOLD-note">데이터를 불러오고 있습니다.</div>
+</div>
+<details class="card"><summary class="sub" style="cursor:pointer">미국 탭 진단 (데이터가 안 나올 때 이 내용을 복사해서 보내 주세요)</summary><pre id="us-diag" class="debug" style="white-space:pre-wrap;margin:8px 0 0"></pre></details>
 </section>
 
 <details class="card" style="margin-top:9px"><summary class="sub" style="cursor:pointer">진단 정보 (데이터가 안 나올 때 이 내용을 복사해서 보내 주세요)</summary><pre id="diag" class="debug" style="white-space:pre-wrap;margin:8px 0 0"></pre></details>
@@ -725,6 +784,44 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-idx]');if(
 document.addEventListener('click',e=>{const b=e.target.closest('[data-pcum]');if(!b)return;S.pcumDays=Number(b.dataset.pcum);renderPCum('KOSPI');renderPCum('KOSDAQ')});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-fbar],[data-fcum],[data-fexp],[data-funit]');if(!b)return;if(b.dataset.funit)S.futUnit=b.dataset.funit;else if(b.dataset.fbar)S.futBar=Number(b.dataset.fbar);else if(b.dataset.fcum)S.futCum=Number(b.dataset.fcum);else if(b.dataset.fexp!==undefined)S.futExpand=b.dataset.fexp==='1';renderFutures()});
 $('refresh').addEventListener('click',()=>load(true));window.addEventListener('resize',()=>{if(S.markets.KOSPI)renderMarket('KOSPI');if(S.markets.KOSDAQ)renderMarket('KOSDAQ');renderFutures();if(S.tab==='compare')renderCompare();if(S.tab==='cumulative')renderCumulative()});
+// ===== 미국 탭 (기존 코드와 독립: 누적 수급 탭 뒤에 추가) =====
+const US_ITEMS=[['IXIC','나스닥 종합'],['INX','S&P 500'],['SOX','필라델피아 반도체 지수'],['NDX','나스닥 100 선물'],['VIX','VIX'],['DXY','달러인덱스'],['WTI','WTI'],['BRENT','브렌트유'],['GOLD','국제 금']];
+const U={data:{},per:{},n:{},loaded:false};
+for(const [s] of US_ITEMS){U.per[s]='day';U.n[s]={...IDX_DEF}}
+function renderUSCard(sym){
+ const vEl=$('us-'+sym+'-value'),cEl=$('us-'+sym+'-change'),note=$('us-'+sym+'-note');if(!vEl)return;
+ const d=U.data[sym],rows=d&&Array.isArray(d.rows)?d.rows:[],per=U.per[sym],curN=U.n[sym][per];
+ if(rows.length){const l=rows.at(-1),p=rows.at(-2);vEl.textContent=fmt(l.close,2);
+  if(p&&p.close){const ch=l.close-p.close,rt=ch/p.close*100;cEl.textContent=`${ch>0?'+':''}${fmt(ch,2)} (${rt>0?'+':''}${rt.toFixed(2)}%)`;cEl.className='index-change '+(ch>0?'red':ch<0?'blue':'muted')}
+  else{cEl.textContent='—';cEl.className='index-change muted'}}
+ else{vEl.textContent='—';cEl.textContent='—';cEl.className='index-change muted'}
+ const bars=periodBars(rows,per);
+ drawCandleChart('us-'+sym+'-chart',bars,curN,per,!d?'차트 데이터를 불러오는 중…':(d.error?'데이터를 불러오지 못했습니다':undefined));
+ const tb=$('us-'+sym+'-idx-tabs');if(tb)tb.innerHTML=IDX_TABS[per].map(n=>`<button data-uidx="${n}"${n===curN?' class="on"':''}>${n}${IDX_UNIT[per]}</button>`).join('');
+ if(!d){note.className='note';note.textContent='데이터를 불러오는 중…';return}
+ if(d.error&&!rows.length){note.className='note error';note.textContent='데이터 오류: '+d.error;return}
+ const shown=Math.min(bars.length,curN),noOhlc=!rows.some(x=>x.open!==null&&x.high!==null&&x.low!==null);
+ note.className='note'+(noOhlc?' warn':'');
+ note.textContent=noOhlc?`종가 데이터만 수신되어 캔들은 표시하지 못했습니다 (${rows.length}개 일봉 · 최근 ${rows.at(-1).date})`:`${shown}개 ${({day:'일봉',week:'주봉',month:'월봉',year:'년봉'})[per]} · 최근 ${rows.at(-1).date} · 이동평균 5·10·20·40·60·120${rows.some(x=>x.volume!==null)?' · 거래량':''}`;
+}
+function renderUSAll(){US_ITEMS.forEach(([s])=>renderUSCard(s))}
+function renderUSDiag(){const el=$('us-diag');if(!el)return;const L=[];for(const [s,name] of US_ITEMS){const d=U.data[s];if(!d){L.push(`${s} ${name}: 대기`);continue}const r=Array.isArray(d.rows)?d.rows:[];L.push(`${s} ${name}: ${d.error?'실패 '+d.error:'OK'} · 출처 ${d.source||'—'} · ${r.length}행${r.length?` (${r[0].date} ~ ${r.at(-1).date})`:''}`);for(const e of (d.errors||[]))L.push('   - '+e.message)}el.textContent=L.join('\n')}
+async function loadUS(force){
+ U.loaded=true;
+ await Promise.all(US_ITEMS.map(async([s])=>{
+  try{const r=await fetch(`${WORKER}?action=world&symbol=${s}`,force?{cache:'no-store'}:{});const j=await r.json();
+   if(!r.ok||!j.ok){const e=Error(j.error||('HTTP '+r.status));e.errors=j.errors;throw e}
+   if(!Array.isArray(j.rows))throw Error('워커가 구버전입니다. cloudflare worker.js를 다시 배포하세요');
+   U.data[s]=j}
+  catch(e){U.data[s]={rows:[],error:e.message,errors:e.errors||[]}}
+  if(S.tab==='us')renderUSCard(s)}));
+ renderUSDiag();
+}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-tab="us"]');if(!t)return;setTimeout(()=>{if(!U.loaded)loadUS();else renderUSAll()},0)});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-uper]');if(!b)return;const card=b.closest('[data-usym]'),s=card&&card.dataset.usym;if(!s)return;U.per[s]=b.dataset.uper;card.querySelectorAll('[data-uper]').forEach(x=>x.classList.toggle('active',x===b));renderUSCard(s)});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-uidx]');if(!b)return;const card=b.closest('[data-usym]'),s=card&&card.dataset.usym;if(!s)return;U.n[s][U.per[s]]=Number(b.dataset.uidx);renderUSCard(s)});
+$('refresh').addEventListener('click',()=>{if(U.loaded)loadUS(true)});
+window.addEventListener('resize',()=>{if(S.tab==='us')renderUSAll()});
 load();
 </script>
 </body></html>
